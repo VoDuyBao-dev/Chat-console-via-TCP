@@ -1,20 +1,24 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Admin\\source\\repos\\ChatApp\\Common\\Common.csproj": {}
+    "D:\\064305001001_HuynhThiTuyetSang\\Ki1nam3\\Lap_trinh_mang\\du_an\\Chat-console-via-TCP\\Common\\Common.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Admin\\source\\repos\\ChatApp\\Common\\Common.csproj": {
+    "D:\\064305001001_HuynhThiTuyetSang\\Ki1nam3\\Lap_trinh_mang\\du_an\\Chat-console-via-TCP\\Common\\Common.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Admin\\source\\repos\\ChatApp\\Common\\Common.csproj",
+        "projectUniqueName": "D:\\064305001001_HuynhThiTuyetSang\\Ki1nam3\\Lap_trinh_mang\\du_an\\Chat-console-via-TCP\\Common\\Common.csproj",
         "projectName": "Common",
-        "projectPath": "C:\\Users\\Admin\\source\\repos\\ChatApp\\Common\\Common.csproj",
+        "projectPath": "D:\\064305001001_HuynhThiTuyetSang\\Ki1nam3\\Lap_trinh_mang\\du_an\\Chat-console-via-TCP\\Common\\Common.csproj",
         "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Admin\\source\\repos\\ChatApp\\Common\\obj\\",
+        "outputPath": "D:\\064305001001_HuynhThiTuyetSang\\Ki1nam3\\Lap_trinh_mang\\du_an\\Chat-console-via-TCP\\Common\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
         "configFilePaths": [
           "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -39,7 +43,8 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        }
+        },
+        "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
         "net8.0": {
@@ -60,7 +65,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.400/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

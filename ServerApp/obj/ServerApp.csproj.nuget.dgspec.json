@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\064305001001_HuynhThiTuyetSang\\Ki1nam3\\Lap_trinh_mang\\du_an\\Chat-console-via-TCP\\ServerAPP\\ServerApp.csproj": {}
+    "D:\\064305001001_HuynhThiTuyetSang\\Ki1nam3\\Lap_trinh_mang\\du_an\\Chat-console-via-TCP\\ServerApp\\ServerApp.csproj": {}
   },
   "projects": {
-    "D:\\064305001001_HuynhThiTuyetSang\\Ki1nam3\\Lap_trinh_mang\\du_an\\Chat-console-via-TCP\\ServerAPP\\ServerApp.csproj": {
+    "D:\\064305001001_HuynhThiTuyetSang\\Ki1nam3\\Lap_trinh_mang\\du_an\\Chat-console-via-TCP\\ServerApp\\ServerApp.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\064305001001_HuynhThiTuyetSang\\Ki1nam3\\Lap_trinh_mang\\du_an\\Chat-console-via-TCP\\ServerAPP\\ServerApp.csproj",
+        "projectUniqueName": "D:\\064305001001_HuynhThiTuyetSang\\Ki1nam3\\Lap_trinh_mang\\du_an\\Chat-console-via-TCP\\ServerApp\\ServerApp.csproj",
         "projectName": "ServerApp",
-        "projectPath": "D:\\064305001001_HuynhThiTuyetSang\\Ki1nam3\\Lap_trinh_mang\\du_an\\Chat-console-via-TCP\\ServerAPP\\ServerApp.csproj",
+        "projectPath": "D:\\064305001001_HuynhThiTuyetSang\\Ki1nam3\\Lap_trinh_mang\\du_an\\Chat-console-via-TCP\\ServerApp\\ServerApp.csproj",
         "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-        "outputPath": "D:\\064305001001_HuynhThiTuyetSang\\Ki1nam3\\Lap_trinh_mang\\du_an\\Chat-console-via-TCP\\ServerAPP\\obj\\",
+        "outputPath": "D:\\064305001001_HuynhThiTuyetSang\\Ki1nam3\\Lap_trinh_mang\\du_an\\Chat-console-via-TCP\\ServerApp\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
