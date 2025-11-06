@@ -1,0 +1,26 @@
+CREATE DATABASE ChatConsoleTCP;
+GO
+
+USE ChatConsoleTCP;
+GO
+
+CREATE TABLE Users (
+    UserId INT IDENTITY PRIMARY KEY,
+    Username NVARCHAR(50) UNIQUE NOT NULL,
+    PasswordHash NVARCHAR(255) NOT NULL,
+    DisplayName NVARCHAR(100),
+    IsOnline BIT DEFAULT 0,
+    LastLogin DATETIME NULL,
+    LastLogout DATETIME NULL
+);
+
+CREATE TABLE Messages (
+    MessageId INT IDENTITY PRIMARY KEY,
+    SenderId INT NOT NULL,
+    ReceiverId INT NOT NULL,
+    Content NVARCHAR(500) NOT NULL,
+    SentTime DATETIME DEFAULT GETDATE(),
+    IsRead BIT DEFAULT 0,
+    FOREIGN KEY (SenderId) REFERENCES Users(UserId),
+    FOREIGN KEY (ReceiverId) REFERENCES Users(UserId)
+);
