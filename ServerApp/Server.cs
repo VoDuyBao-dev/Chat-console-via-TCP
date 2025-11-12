@@ -11,6 +11,7 @@ namespace ServerApp
         private TcpListener _listener;
 
         // Bắt đầu server
+        // test ở đây xem 
         public void Start(int port)
         {
             try
