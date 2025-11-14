@@ -20,13 +20,11 @@ namespace ServerApp
                 Console.WriteLine($" Server started. Listening on port {port}...");
                 Console.WriteLine(" Waiting for client connections...\n");
 
-                // Vòng lặp chờ client kết nối
                 while (true)
                 {
                     TcpClient client = _listener.AcceptTcpClient();
                     Console.WriteLine($" Client connected from {client.Client.RemoteEndPoint}");
 
-                    // Tạo luồng riêng cho mỗi client
                     Thread clientThread = new Thread(() => HandleClient(client));
                     clientThread.Start();
                 }
@@ -37,7 +35,6 @@ namespace ServerApp
             }
         }
 
-        // Hàm xử lý client
         private void HandleClient(TcpClient client)
         {
             NetworkStream stream = client.GetStream();
@@ -46,12 +43,47 @@ namespace ServerApp
 
             try
             {
-                while ((byteCount = stream.Read(buffer, 0, buffer.Length)) > 0)
+                while (true)
                 {
-                    string message = Encoding.UTF8.GetString(buffer, 0, byteCount);
+                    byteCount = stream.Read(buffer, 0, buffer.Length);
+
+                    // ====== (1) Client ngắt kết nối chủ động ======
+                    if (ConnectionHandler.IsClientDisconnect(byteCount))
+                    {
+                        Console.WriteLine($" Client {client.Client.RemoteEndPoint} disconnected normally.");
+                        break;
+                    }
+
+                    // ====== (2) Message quá lớn (đầy buffer) ======
+                    if (ConnectionHandler.IsTooLarge(byteCount, buffer.Length))
+                    {
+                        Console.WriteLine(" Warning: message too large. Possible overflow or long message.");
+                    }
+
+                    // ====== (3) Giải mã UTF-8 an toàn ======
+                    if (!ConnectionHandler.TryDecode(buffer, byteCount, out string message))
+                    {
+                        Console.WriteLine(" Invalid data received. UTF-8 decode failed.");
+                        continue; // bỏ qua gói lỗi, tiếp tục đọc
+                    }
+
+                    // ====== (4) Lệnh QUIT ======
+                    if (ConnectionHandler.IsQuitCommand(message))
+                    {
+                        Console.WriteLine($" Client {client.Client.RemoteEndPoint} requested QUIT.");
+                        break;
+                    }
+
+                    // ====== (5) Message trống ======
+                    if (ConnectionHandler.IsEmpty(message))
+                    {
+                        Console.WriteLine(" Empty message ignored.");
+                        continue;
+                    }
+
                     Console.WriteLine($" Message from {client.Client.RemoteEndPoint}: {message}");
 
-                    // Gửi phản hồi lại client (echo)
+                    // ====== (6) Echo lại client giữ nguyên logic cũ ======
                     string response = $"Server received: {message}";
                     byte[] responseData = Encoding.UTF8.GetBytes(response);
                     stream.Write(responseData, 0, responseData.Length);
@@ -59,10 +91,11 @@ namespace ServerApp
             }
             catch (Exception ex)
             {
-                Console.WriteLine($" Client {client.Client.RemoteEndPoint} disconnected: {ex.Message}");
+                Console.WriteLine($" Client {client.Client.RemoteEndPoint} disconnected with error: {ex.Message}");
             }
             finally
             {
+                stream.Close();   
                 client.Close();
             }
         }
