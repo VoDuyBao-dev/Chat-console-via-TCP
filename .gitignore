@@ -9,7 +9,7 @@ out/
 *.user
 *.userosscache
 *.sln.docstates
-*.vscode/
+.vscode/
 
 # Rider
 .idea/
