@@ -7,7 +7,7 @@ namespace ClientApp
     {
         private const string DefaultIP = "127.0.0.1";
         private const int DefaultPort = 5000;
-
+// tesst
         static void Main(string[] args)
         {
             Console.Title = "TCP Chat Client";
