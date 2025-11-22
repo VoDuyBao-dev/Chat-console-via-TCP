@@ -9,7 +9,7 @@ namespace ServerApp
             Console.Title = "TCP Chat Server";
 
             Server server = new Server();
-            server.Start(5000); 
+            server.Start(); 
 
             Console.ReadLine();
         }
