@@ -3,12 +3,12 @@
   "WorkspaceRootPath": "D:\\Network\\Chat-console-via-TCP\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|d:\\network\\chat-console-via-tcp\\serverapp.tests\\serverstoptest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|solutionrelative:serverapp.tests\\serverstoptest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|d:\\network\\chat-console-via-tcp\\serverapp.tests\\clientconnectiontests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|solutionrelative:serverapp.tests\\clientconnectiontests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|d:\\network\\chat-console-via-tcp\\serverapp.tests\\serverstoptest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|solutionrelative:serverapp.tests\\serverstoptest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{AD159313-D0B3-4552-AB1F-E444C6CE593C}|ClientApp\\ClientApp.csproj|d:\\network\\chat-console-via-tcp\\clientapp\\chatclient.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -26,7 +26,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Bookmark",
@@ -34,13 +34,13 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "ClientConnectionTests.cs",
               "DocumentMoniker": "D:\\Network\\Chat-console-via-TCP\\ServerApp.Tests\\ClientConnectionTests.cs",
               "RelativeDocumentMoniker": "ServerApp.Tests\\ClientConnectionTests.cs",
               "ToolTip": "D:\\Network\\Chat-console-via-TCP\\ServerApp.Tests\\ClientConnectionTests.cs",
               "RelativeToolTip": "ServerApp.Tests\\ClientConnectionTests.cs",
-              "ViewState": "AgIAAAEAAAAAAAAAAAAWwAwAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-11-24T16:00:37.886Z",
               "EditorCaption": ""
@@ -65,22 +65,21 @@
               "RelativeDocumentMoniker": "ServerApp.Tests\\ServerApp.Tests.csproj",
               "ToolTip": "D:\\Network\\Chat-console-via-TCP\\ServerApp.Tests\\ServerApp.Tests.csproj",
               "RelativeToolTip": "ServerApp.Tests\\ServerApp.Tests.csproj",
-              "ViewState": "AgIAAA8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
               "WhenOpened": "2025-11-23T08:50:31.182Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "ServerStopTest.cs",
               "DocumentMoniker": "D:\\Network\\Chat-console-via-TCP\\ServerApp.Tests\\ServerStopTest.cs",
               "RelativeDocumentMoniker": "ServerApp.Tests\\ServerStopTest.cs",
               "ToolTip": "D:\\Network\\Chat-console-via-TCP\\ServerApp.Tests\\ServerStopTest.cs",
               "RelativeToolTip": "ServerApp.Tests\\ServerStopTest.cs",
-              "ViewState": "AgIAAAUAAAAAAAAAAAAhwAsAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAUAAAAAAAAAAAAhwBIAAAANAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-22T15:22:37.648Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-11-22T15:22:37.648Z"
             }
           ]
         }
