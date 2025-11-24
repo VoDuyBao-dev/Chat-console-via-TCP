@@ -6,6 +6,7 @@ using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
+using Common;
 
 
 namespace ClientApp
@@ -120,5 +121,25 @@ namespace ClientApp
             _client?.Close();
             Console.WriteLine(" Disconnected from server. Press Enter to close...");
         }
+
+
+
+
+
+
+        public void Register()
+        {
+            Console.WriteLine("===== REGISTER =====");
+            Console.Write("Username: ");
+            string username = Console.ReadLine();
+
+            Console.Write("Password: ");
+            string password = Console.ReadLine();
+
+            string packet = Protocol.BuildRegisterPacket(username, password);
+
+            byte[] data = Encoding.UTF8.GetBytes(packet);
+            _stream.Write(data, 0, data.Length);
+        }
     }
- }
+}
