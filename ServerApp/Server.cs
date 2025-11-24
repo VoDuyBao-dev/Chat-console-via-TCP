@@ -4,6 +4,9 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using ServerApp.Models;
+using ServerApp.Services;
+using Common;
+using System.Security.Cryptography;
 
 namespace ServerApp
 {
@@ -14,8 +17,19 @@ namespace ServerApp
         private readonly object _lock = new();
         private bool _running = false;
         public int Port { get; }
+        private readonly DatabaseService _db;
 
-        public Server(int port = 5000) => Port = port;
+
+        // public Server(int port = 5000) => Port = port;
+        public Server(int port = 5000)
+        {
+            Port = port;
+
+            string conn = ConfigService.GetConnectionString();
+            _db = new DatabaseService(conn);
+        }
+
+
 
         public void Start()
         {
@@ -187,6 +201,42 @@ namespace ServerApp
             Console.WriteLine();
         }
 
+
+
+
+        private void HandleRegister(User user, string[] parts)
+        {
+            // parts: [0]=REGISTER , [1]=username , [2]=password
+            if (parts.Length < 3)
+            {
+                user.Writer.WriteLine("REGISTER_FAIL|Invalid format");
+                return;
+            }
+
+            string username = parts[1];
+            string password = parts[2];
+
+            if (_db.IsUsernameTaken(username))
+            {
+                user.Writer.WriteLine("REGISTER_FAIL|Username already exists");
+                return;
+            }
+
+            string hash = HashPassword(password);
+
+            bool ok = _db.CreateUser(username, hash, username);
+
+            if (ok)
+                user.Writer.WriteLine("REGISTER_OK|Đăng ký thành công");
+            else
+                user.Writer.WriteLine("REGISTER_FAIL|Database error");
+        }
+        private string HashPassword(string raw)
+        {
+            using var sha = SHA256.Create();
+            byte[] bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(raw));
+            return BitConverter.ToString(bytes).Replace("-", "").ToLower();
+        }
 
 
     }
