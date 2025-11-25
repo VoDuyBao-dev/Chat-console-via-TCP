@@ -1,144 +1,173 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Sockets;
-using System.Security.AccessControl;
 using System.Text;
-using System.Threading.Tasks;
 using System.Threading;
 using Common;
-
 
 namespace ClientApp
 {
     public class ChatClient
     {
-        private TcpClient _client;
-        private NetworkStream _stream;
-        private string _serverIP;
-        private int _serverPort;
-        private bool _isRunning = true; // kiểm soát trạng thái
+        private TcpClient? _client;
+        private NetworkStream? _stream;
+        private readonly string _ip;
+        private readonly int _port;
+
+        private readonly UserSession _session;
+        private StreamReader? _reader;
 
         public ChatClient(string ip, int port)
         {
-            _serverIP = ip;
-            _serverPort = port;
+            _ip = ip;
+            _port = port;
+            _session = new UserSession();
         }
 
-        // Kết nối tới server 
-        public void Connect()
+        public void Start()
         {
             try
             {
                 _client = new TcpClient();
-                _client.Connect(_serverIP, _serverPort);
-                Console.WriteLine($"\n Connected to server {_serverIP}:{_serverPort}");
+                _client.Connect(_ip, _port);
 
                 _stream = _client.GetStream();
+                _reader = new StreamReader(_stream, Encoding.UTF8);
 
-                // Taọ luồng nhận tin nhắn song song
-                Thread receiveThread = new Thread(ReceiveMessages);
+
+                Console.WriteLine($"Kết nối đến server {_ip}:{_port} thành công!");
+
+                // Luồng nhận tin nhắn song song
+                Thread receiveThread = new Thread(ReceiveLoop) { IsBackground = true };
                 receiveThread.Start();
 
-                // Cho phép người dùng nhập tin nhắn gửi 
-                SendMessages();
+                Console.WriteLine("Server yêu cầu bạn REGISTER hoặc LOGIN...\n");
+
+                AuthLoop();     // Giai đoạn đăng ký / đăng nhập
+                ChatLoop();     // Giai đoạn chat
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"\n Connection error: {ex.Message}");
-            }
-            finally
-            {
-                Disconnect();
-            }
-
-        }
-
-        // Nhận tin nhắn từ server 
-        private void ReceiveMessages()
-        {
-            try
-            {
-                byte[] buffer = new byte[1024];
-                int bytesRead;
-
-                while (_isRunning && (bytesRead = _stream.Read(buffer, 0, buffer.Length)) > 0)
-                {
-                    string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                    Console.WriteLine($"\n Server: {message}");
-                    Console.Write("You: ");
-                }
-            }
-            catch (Exception)
-            {
-                if (_isRunning)
-                {
-                    Console.WriteLine("\n Disconnected from server.");
-                }
-            }
-            finally
-            {
-                _isRunning = false; // Luồng gửi cũng dừng lại nếu luồng nhận lỗi 
+                Console.WriteLine("Lỗi kết nối: " + ex.Message);
             }
         }
 
-        // Gửi tin nhắn lên server 
-        private void SendMessages()
+        private void AuthLoop()
         {
-            Console.WriteLine("Type message and press Enter (type 'exit' to quit)\n");
-
-            while (_isRunning)
+            while (!_session.IsLoggedIn)
             {
-                Console.Write("You: ");
-                string msg = Console.ReadLine();
+                ConsoleUI.ShowAuthMenu();
+                string choice = Console.ReadLine();
 
-                if (msg?.ToLower() == "exit")
+                if (choice == "1") Register();
+                else if (choice == "2") Login();
+                else if (choice == "0") Environment.Exit(0);
+                else Console.WriteLine("Sai lựa chọn.");
+            }
+        }
+
+        private void ChatLoop()
+        {
+            ConsoleUI.ShowChatCommands();
+
+            while (true)
+            {
+                string? msg = Console.ReadLine();
+                if (msg == "exit")
                 {
-                    _isRunning = false;
+                    Send("exit");
                     break;
                 }
-                if (!string.IsNullOrEmpty(msg))
-                {
-                    try
-                    {
-                        byte[] data = Encoding.UTF8.GetBytes(msg);
-                        _stream.Write(data, 0, data.Length);
-                        _stream.Flush();
-                    }
-                    catch (Exception)
-                    {
-                        Console.WriteLine("\n[LỖI GỬI] Mất kết nối. Vui lòng nhấn Enter để thoát.");
-                        _isRunning = false;
-                        break;
-                    }
-                }
+                Send(msg);
             }
         }
-        private void Disconnect()
+
+        private void Register()
         {
-            _isRunning = false;
-            _stream?.Close();
-            _client?.Close();
-            Console.WriteLine(" Disconnected from server. Press Enter to close...");
-        }
-
-
-
-
-
-
-        public void Register()
-        {
-            Console.WriteLine("===== REGISTER =====");
             Console.Write("Username: ");
-            string username = Console.ReadLine();
+            string? u = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(u))
+            {
+                Console.WriteLine("Tên không hợp lệ.");
+                return;
+            }
+
 
             Console.Write("Password: ");
-            string password = Console.ReadLine();
+            string p = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(p))
+            {
+                Console.WriteLine("Mât khẩu không hợp lệ.");
+                return;
+            }
 
-            string packet = Protocol.BuildRegisterPacket(username, password);
+            Send(Protocol.BuildRegister(u, p));
+            Thread.Sleep(1000);
+        }
 
-            byte[] data = Encoding.UTF8.GetBytes(packet);
+        private void Login()
+        {
+            Console.Write("Username: ");
+            string? u = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(u))
+            {
+                Console.WriteLine("Tên không hợp lệ.");
+                return;
+            }
+
+            Console.Write("Password: ");
+            string p = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(p))
+            {
+                Console.WriteLine("Mât khẩu không hợp lệ.");
+                return;
+            }
+
+            Send(Protocol.BuildLogin(u, p));
+            Thread.Sleep(1000);
+        }
+
+        private void ReceiveLoop()
+        {
+            while (true)
+            {
+                string? msg = _reader.ReadLine();
+                if (msg == null) return;
+
+                // ===== XỬ LÝ AUTH =====
+                if (msg.StartsWith(Protocol.LOGIN_OK))
+                {
+                    string username = msg.Split('|')[1];
+                    Console.WriteLine($"Đăng nhập thành công! Xin chào {username}");
+                    _session.IsLoggedIn = true;
+                    continue;
+                }
+
+                if (msg.StartsWith(Protocol.LOGIN_FAIL))
+                {
+                    Console.WriteLine("Đăng nhập thất bại: " + msg.Split('|')[1]);
+                    continue;
+                }
+
+                if (msg.StartsWith(Protocol.REGISTER_OK))
+                {
+                    Console.WriteLine("Đăng ký thành công! Hãy đăng nhập.");
+                    continue;
+                }
+
+                if (msg.StartsWith(Protocol.REGISTER_FAIL))
+                {
+                    Console.WriteLine("Đăng ký thất bại: " + msg.Split('|')[1]);
+                    continue;
+                }
+
+                // ===== TIN NHẮN CHAT =====
+                Console.WriteLine(msg);
+            }
+        }
+
+        private void Send(string msg)
+        {
+            byte[] data = Encoding.UTF8.GetBytes(msg + "\n");
             _stream.Write(data, 0, data.Length);
         }
     }

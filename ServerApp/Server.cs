@@ -6,7 +6,7 @@ using System.Threading;
 using ServerApp.Models;
 using ServerApp.Services;
 using Common;
-using System.Security.Cryptography;
+
 
 namespace ServerApp
 {
@@ -21,10 +21,11 @@ namespace ServerApp
 
 
         // public Server(int port = 5000) => Port = port;
+
         public Server(int port = 5000)
         {
             Port = port;
-
+            // Kết nối đến database 
             string conn = ConfigService.GetConnectionString();
             _db = new DatabaseService(conn);
         }
@@ -38,6 +39,7 @@ namespace ServerApp
             _running = true;
 
             PrintLocalIPs();
+            Console.ForegroundColor = ConsoleColor.DarkMagenta;
             Console.WriteLine($"[SERVER] Đang chạy trên port {Port} - Chờ kết nối...");
 
             while (_running)
@@ -45,6 +47,12 @@ namespace ServerApp
                 try
                 {
                     TcpClient client = _listener.AcceptTcpClient();
+                    // hiển thị kết nối thành công 
+                    string? remote = client.Client.RemoteEndPoint?.ToString();
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine($"[CONNECT] Client đã kết nối: {remote}");
+                    Console.ResetColor();
+
                     Thread t = new(() => HandleClient(client))
                     {
                         IsBackground = true
@@ -53,6 +61,7 @@ namespace ServerApp
                 }
                 catch (Exception ex) when (!_running)
                 {
+                    Console.WriteLine(ex.Message);
                     break;
                 }
                 catch (Exception ex)
@@ -66,42 +75,64 @@ namespace ServerApp
         {
             var user = new User(tcpClient);
             string? clientEndPoint = tcpClient.Client.RemoteEndPoint?.ToString();
-
             try
             {
-                // lấy username(dùng cách low-level) 
-                string? username = SafeReadLine(user.Stream);
-                user.Username = string.IsNullOrWhiteSpace(username) ? "Guest" : username.Trim();
-
+                // user.Writer.WriteLine("WELCOME|Hãy REGISTER hoặc LOGIN");
+                // user.Writer.WriteLine("FORMAT: REGISTER|username|password");
+                // user.Writer.WriteLine("FORMAT: LOGIN|username|password");
                 lock (_lock) _clients.Add(user);
-                Console.WriteLine($"[JOIN] {user.Username} ({clientEndPoint})");
 
-                Broadcast($"[SERVER] {user.Username} đã vào phòng! (Online: {_clients.Count})");
-                BroadcastUserList();
+                while (true)
+                {
+                    string? raw = SafeReadLine(user.Stream);
+                    if (raw == null) return;
 
-                user.Writer.WriteLine($"Chào {user.Username}! Gõ exit để thoát.");
+                    var parts = Protocol.Decode(raw);
+                    string cmd = parts[0].ToUpper();
 
-                // nhận tin nhắn
+                    switch (cmd)
+                    {
+                        case "REGISTER":
+                            HandleRegister(user, parts);
+                            break;
+
+                        case "LOGIN":
+                            if (HandleLogin(user, parts))
+                                goto LoggedIn;
+                            break;
+
+                        default:
+                            user.Writer.WriteLine("ERROR|Hãy LOGIN hoặc REGISTER.");
+                            break;
+                    }
+                }
+
+            LoggedIn:
+                user.Writer.WriteLine(" Gõ exit để thoát.");
+
                 string? message;
                 while ((message = SafeReadLine(user.Stream)) != null)
                 {
-                    if (message.Equals("exit", StringComparison.OrdinalIgnoreCase))
-                        break;
+                    if (message == "exit") break;
+                    if (string.IsNullOrWhiteSpace(message)) continue;
 
-                    if (string.IsNullOrWhiteSpace(message))
-                        continue;
+                    Broadcast($"[{user.Username}]: {message}", user);
 
-                    string fullMsg = $"[{user.Username}]: {message}";
-                    Console.WriteLine(fullMsg);
-                    Broadcast(fullMsg, user);
+                    int? senderId = _db.GetUserId(user.Username);
+                    _db.SaveMessage(senderId, null, message, 1);
                 }
             }
             catch (Exception ex)
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"[ERROR] {clientEndPoint}: {ex.Message}");
             }
             finally
             {
+                if (user.Username != null)
+                {
+                    _db.SetOffline(user.Username);
+                }
                 lock (_lock) _clients.Remove(user);
 
                 Console.WriteLine($"[LEAVE] {user.Username} ({clientEndPoint}) - Còn lại: {_clients.Count}");
@@ -111,6 +142,7 @@ namespace ServerApp
                 tcpClient.Close();
             }
         }
+
 
         // hàm đọc dòng để đảm bảo an toàn
         private string? SafeReadLine(NetworkStream stream)
@@ -206,10 +238,9 @@ namespace ServerApp
 
         private void HandleRegister(User user, string[] parts)
         {
-            // parts: [0]=REGISTER , [1]=username , [2]=password
             if (parts.Length < 3)
             {
-                user.Writer.WriteLine("REGISTER_FAIL|Invalid format");
+                user.Writer.WriteLine($"{Protocol.REGISTER_FAIL}|Invalid Format");
                 return;
             }
 
@@ -218,25 +249,49 @@ namespace ServerApp
 
             if (_db.IsUsernameTaken(username))
             {
-                user.Writer.WriteLine("REGISTER_FAIL|Username already exists");
+                user.Writer.WriteLine($"{Protocol.REGISTER_FAIL}|Username Exists");
                 return;
             }
 
-            string hash = HashPassword(password);
-
-            bool ok = _db.CreateUser(username, hash, username);
+            bool ok = _db.CreateUser(username, Utils.HashPassword(password), username);
 
             if (ok)
-                user.Writer.WriteLine("REGISTER_OK|Đăng ký thành công");
+                user.Writer.WriteLine($"{Protocol.REGISTER_OK}");
             else
-                user.Writer.WriteLine("REGISTER_FAIL|Database error");
+                user.Writer.WriteLine($"{Protocol.REGISTER_FAIL}|DB_ERROR");
         }
-        private string HashPassword(string raw)
+
+        private bool HandleLogin(User user, string[] parts)
         {
-            using var sha = SHA256.Create();
-            byte[] bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(raw));
-            return BitConverter.ToString(bytes).Replace("-", "").ToLower();
+            if (parts.Length < 3)
+            {
+                user.Writer.WriteLine($"{Protocol.LOGIN_FAIL}|Invalid Format");
+                return false;
+            }
+
+            string username = parts[1];
+            string password = parts[2];
+
+            if (!_db.ValidateUser(username, password))
+            {
+                user.Writer.WriteLine($"{Protocol.LOGIN_FAIL}|Sai tài khoản hoặc mật khẩu");
+                return false;
+            }
+
+            user.Username = username;
+            _db.SetOnline(username);
+
+            lock (_lock) _clients.Add(user);
+
+            // Gửi đúng chuẩn giao thức
+            user.Writer.WriteLine($"{Protocol.LOGIN_OK}|{username}");
+
+            // Broadcast($"[SERVER] {username} đã vào phòng!");
+            // BroadcastUserList();
+            return true;
         }
+
+
 
 
     }

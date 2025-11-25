@@ -1,12 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 
 namespace ClientApp
 {
-    internal class Logger
+    public static class Logger
     {
+        private const string LogFile = "client.log";
+
+        public static void Write(string message)
+        {
+            File.AppendAllText(LogFile, $"[{DateTime.Now}] {message}\n");
+        }
     }
 }
