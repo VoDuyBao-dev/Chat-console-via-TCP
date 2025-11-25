@@ -59,7 +59,7 @@ namespace ServerApp.Services
             using var reader = await cmd.ExecuteReaderAsync();
             if (await reader.ReadAsync())
             {
-                return (reader.GetInt32("UserId"), reader.GetString("DisplayName"));
+                return (reader.GetInt32(UserId), reader.GetString("DisplayName"));
             }
             return null;
         }

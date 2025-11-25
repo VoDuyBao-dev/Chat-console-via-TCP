@@ -1,174 +1,106 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading;
-using Common;
+using System.Threading.Tasks;
+using ClientApp.Services;
+using ClientApp.Utilities;
 
 namespace ClientApp
 {
-    public class ChatClient
+    public class Client
     {
-        private TcpClient? _client;
-        private NetworkStream? _stream;
-        private readonly string _ip;
-        private readonly int _port;
+        private readonly UdpDiscoveryClient _discovery = new();
+        private readonly TcpChatClient _chat = new();
 
-        private readonly UserSession _session;
-        private StreamReader? _reader;
-
-        public ChatClient(string ip, int port)
+        public async Task RunAsync()
         {
-            _ip = ip;
-            _port = port;
-            _session = new UserSession();
-        }
+            Console.Title = "Chat LAN Client - Nhóm 11";
+            ConsoleLogger.Info("=== CHÀO MỪNG ĐẾN VỚI CHAT LAN ===");
 
-        public void Start()
-        {
-            try
+            // Bước 1: Tìm server
+            var servers = await _discovery.DiscoverServersAsync(TimeSpan.FromSeconds(8));
+
+            string serverIp;
+            int serverPort;
+
+            if (servers.Count == 0)
             {
-                _client = new TcpClient();
-                _client.Connect(_ip, _port);
-
-                _stream = _client.GetStream();
-                _reader = new StreamReader(_stream, Encoding.UTF8);
-
-
-                Console.WriteLine($"Kết nối đến server {_ip}:{_port} thành công!");
-
-                // Luồng nhận tin nhắn song song
-                Thread receiveThread = new Thread(ReceiveLoop) { IsBackground = true };
-                receiveThread.Start();
-
-                Console.WriteLine("Server yêu cầu bạn REGISTER hoặc LOGIN...\n");
-
-                AuthLoop();     // Giai đoạn đăng ký / đăng nhập
-                ChatLoop();     // Giai đoạn chat
+                ConsoleLogger.Info("Không tìm thấy server tự động. Nhập thủ công:");
+                Console.Write("IP Server: ");
+                serverIp = Console.ReadLine()!.Trim();
+                Console.Write("Port (mặc định 5000): ");
+                var portInput = Console.ReadLine();
+                serverPort = string.IsNullOrEmpty(portInput) ? 5000 : int.Parse(portInput);
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine("Lỗi kết nối: " + ex.Message);
-            }
-        }
+                ConsoleLogger.Info($"\nTìm thấy {servers.Count} server:");
+                for (int i = 0; i < servers.Count; i++)
+                    Console.WriteLine($"  [{i + 1}] {servers[i]}");
 
-        private void AuthLoop()
-        {
-            while (!_session.IsLoggedIn)
+                Console.Write("\nChọn server (nhập số): ");
+                if (!int.TryParse(Console.ReadLine(), out int choice) || choice < 1 || choice > servers.Count)
+                    choice = 1;
+
+                var selected = servers[choice - 1];
+                serverIp = selected.Ip;
+                serverPort = selected.Port;
+                ConsoleLogger.Success($"Đã chọn: {selected.Name}");
+            }
+
+            // Bước 2: Kết nối TCP
+            await _chat.ConnectAsync(serverIp, serverPort);
+            // Bắt đầu nhận tin nhắn - CHỈ GỌI 1 LẦN DUY NHẤT!
+            _chat.StartReceiving(message =>
             {
-                ConsoleUI.ShowAuthMenu();
-                string choice = Console.ReadLine();
+                // Tất cả tin nhắn từ server đều đi qua đây → bạn làm gì cũng được!
+                if (message.StartsWith("[PRIVATE", StringComparison.OrdinalIgnoreCase))
+                    ConsoleLogger.Private(message);
+                else if (message.Contains("===LOGIN_SUCCESS===")) // server gửi cái này là login OK
+                    ConsoleLogger.Success("Đăng nhập thành công!\n");
+                else if (message.Contains("has joined") || message.Contains("Welcome") || message.Contains("Your username is now"))
+                    ConsoleLogger.Success(message);
+                else if (message.StartsWith("[SERVER]"))
+                    ConsoleLogger.Info(message);
+                else
+                    ConsoleLogger.Receive(message);
+            });
 
-                if (choice == "1") Register();
-                else if (choice == "2") Login();
-                else if (choice == "0") Environment.Exit(0);
-                else Console.WriteLine("Sai lựa chọn.");
-            }
-        }
-
-        private void ChatLoop()
-        {
-            ConsoleUI.ShowChatCommands();
-
+            // Đăng nhập: server hỏi gì thì in, người dùng nhập gì thì gửi
+            ConsoleLogger.Info("Đang chờ server yêu cầu tên...");
             while (true)
             {
-                string? msg = Console.ReadLine();
-                if (msg == "exit")
+                string? input = Console.ReadLine();
+                if (input == null) continue;
+
+                await _chat.SendMessageAsync(input.Trim());
+
+                // Dừng vòng lặp khi thấy dấu hiệu login thành công
+                // (Bạn có thể để server gửi một dòng đặc biệt như ===LOGIN_SUCCESS===)
+                // Hoặc kiểm tra tin nhắn gần nhất có chứa từ khóa join/welcome
+                // Cách đơn giản: đợi 1 lúc rồi break (vì tin nhắn welcome đã được in bởi callback)
+                await Task.Delay(800); // đợi server phản hồi
+                ConsoleLogger.Success("Đăng nhập thành công! Bắt đầu chat...\n");
+                break;
+            }
+
+            // Chat chính
+            ConsoleLogger.Info("Gõ tin nhắn, dùng /pm <tên> <nội dung>, hoặc 'exit' để thoát.\n");
+            while (true)
+            {
+                string? input = Console.ReadLine();
+                if (input == null) continue;
+                if (input.Equals("exit", StringComparison.OrdinalIgnoreCase))
                 {
-                    Send("exit");
+                    await _chat.SendMessageAsync("exit");
                     break;
                 }
-                Send(msg);
-            }
-        }
-
-        private void Register()
-        {
-            Console.Write("Username: ");
-            string? u = Console.ReadLine();
-            if (string.IsNullOrWhiteSpace(u))
-            {
-                Console.WriteLine("Tên không hợp lệ.");
-                return;
+                await _chat.SendMessageAsync(input);
             }
 
-
-            Console.Write("Password: ");
-            string p = Console.ReadLine();
-            if (string.IsNullOrWhiteSpace(p))
-            {
-                Console.WriteLine("Mât khẩu không hợp lệ.");
-                return;
-            }
-
-            Send(Protocol.BuildRegister(u, p));
-            Thread.Sleep(1000);
-        }
-
-        private void Login()
-        {
-            Console.Write("Username: ");
-            string? u = Console.ReadLine();
-            if (string.IsNullOrWhiteSpace(u))
-            {
-                Console.WriteLine("Tên không hợp lệ.");
-                return;
-            }
-
-            Console.Write("Password: ");
-            string p = Console.ReadLine();
-            if (string.IsNullOrWhiteSpace(p))
-            {
-                Console.WriteLine("Mât khẩu không hợp lệ.");
-                return;
-            }
-
-            Send(Protocol.BuildLogin(u, p));
-            Thread.Sleep(1000);
-        }
-
-        private void ReceiveLoop()
-        {
-            while (true)
-            {
-                string? msg = _reader.ReadLine();
-                if (msg == null) return;
-
-                // ===== XỬ LÝ AUTH =====
-                if (msg.StartsWith(Protocol.LOGIN_OK))
-                {
-                    string username = msg.Split('|')[1];
-                    Console.WriteLine($"Đăng nhập thành công! Xin chào {username}");
-                    _session.IsLoggedIn = true;
-                    continue;
-                }
-
-                if (msg.StartsWith(Protocol.LOGIN_FAIL))
-                {
-                    Console.WriteLine("Đăng nhập thất bại: " + msg.Split('|')[1]);
-                    continue;
-                }
-
-                if (msg.StartsWith(Protocol.REGISTER_OK))
-                {
-                    Console.WriteLine("Đăng ký thành công! Hãy đăng nhập.");
-                    continue;
-                }
-
-                if (msg.StartsWith(Protocol.REGISTER_FAIL))
-                {
-                    Console.WriteLine("Đăng ký thất bại: " + msg.Split('|')[1]);
-                    continue;
-                }
-
-                // ===== TIN NHẮN CHAT =====
-                Console.WriteLine(msg);
-            }
-        }
-
-        private void Send(string msg)
-        {
-            byte[] data = Encoding.UTF8.GetBytes(msg + "\n");
-            _stream.Write(data, 0, data.Length);
+            _chat.Disconnect();
         }
     }
 }
