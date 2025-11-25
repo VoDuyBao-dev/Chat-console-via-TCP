@@ -14,18 +14,23 @@ namespace ServerApp.Services
 
         private MySqlConnection GetConn() => new MySqlConnection(_connStr);
 
-        public async Task<bool> UsernameExistsAsync(string username)
+        public async Task<bool> UsernameOrDisplayExistsAsync(string username, string displayName)
         {
             using var conn = GetConn();
             await conn.OpenAsync();
 
-            string sql = "SELECT COUNT(*) FROM users WHERE Username=@u";
+            string sql = @"SELECT COUNT(*) 
+                   FROM users 
+                   WHERE Username = @u OR DisplayName = @d";
+
             var cmd = new MySqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@u", username);
+            cmd.Parameters.AddWithValue("@d", displayName);
 
             long count = (long)await cmd.ExecuteScalarAsync();
             return count > 0;
         }
+
 
         public async Task<bool> RegisterAsync(string username, string passwordHash, string displayName)
         {
@@ -59,8 +64,12 @@ namespace ServerApp.Services
             using var reader = await cmd.ExecuteReaderAsync();
             if (await reader.ReadAsync())
             {
-                return (reader.GetInt32(UserId), reader.GetString("DisplayName"));
+                int userId = reader.GetInt32(0);  // UserId là cột đầu tiên
+                string displayName = reader.IsDBNull(1) ? "" : reader.GetString(1);
+
+                return (userId, displayName);
             }
+
             return null;
         }
 

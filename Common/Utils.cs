@@ -1,15 +1,19 @@
 ﻿using System.Text;
 using System.Security.Cryptography;
 
-
-public static class Utils
+namespace Common
+{
+    public static class Utils
     {
-        public static string HashPassword(string input)
+        public static class PasswordHasher
         {
-            using var sha = SHA256.Create();
-            var bytes = Encoding.UTF8.GetBytes(input);
-            var hash = sha.ComputeHash(bytes);
-            return Convert.ToHexString(hash);
+            public static string SHA256Hash(string input)
+            {
+                using var sha = SHA256.Create();
+                byte[] bytes = Encoding.UTF8.GetBytes(input);
+                byte[] hashBytes = sha.ComputeHash(bytes);
+                return Convert.ToHexString(hashBytes);
+            }
         }
     }
-
+}

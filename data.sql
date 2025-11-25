@@ -1,72 +1,101 @@
-DROP DATABASE IF EXISTS chatconsoletcp;
-CREATE DATABASE chatconsoletcp
-CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE chatconsoletcp;
 
-CREATE TABLE users (
-    UserId INT AUTO_INCREMENT PRIMARY KEY,
-    Username VARCHAR(50) NOT NULL UNIQUE,
-    PasswordHash VARCHAR(255) NOT NULL,
-    DisplayName VARCHAR(100) DEFAULT NULL,
-    IsOnline TINYINT(1) DEFAULT 0,
-    LastLogin DATETIME DEFAULT NULL,
-    LastLogout DATETIME DEFAULT NULL
-);
-
-CREATE TABLE messages (
-    MessageId INT AUTO_INCREMENT PRIMARY KEY,
-    SenderId INT NULL,
-    ReceiverId INT NULL,
-    Content VARCHAR(500) NOT NULL,
-    SentTime DATETIME DEFAULT CURRENT_TIMESTAMP,
-    IsRead TINYINT(1) DEFAULT 0,
-    MessageType TINYINT NOT NULL DEFAULT 0,
-    CONSTRAINT chk_MessageType CHECK (MessageType IN (0,1,2)),
-    FOREIGN KEY (SenderId) REFERENCES users(UserId) ON DELETE CASCADE,
-    FOREIGN KEY (ReceiverId) REFERENCES users(UserId) ON DELETE SET NULL
-);
-
-INSERT INTO users (UserId, Username, PasswordHash, DisplayName)
+INSERT INTO users (Username, PasswordHash, DisplayName, IsOnline, LastLogin, LastLogout)
 VALUES
-(1, 'lan',  '8d969eef6ecad3c29a3a629280e686cff8caebd381e2733d9b8f8b8d19f9a7bf', 'Lan'),
-(2, 'bao',  '8d969eef6ecad3c29a3a629280e686cff8caebd381e2733d9b8f8b8d19f9a7bf', 'Bảo'),
-(3, 'yen',  '96e79218965eb72c92a549dd5a330112b2f6e7f0d189f5d8f2e6a0be23c7e7f8', 'Yến'),
-(4, 'truc', '7c4a8d09ca3762af61e59520943dc26494f8941bfa3d1b8f7f0e6e03f2e0f90b', 'Trúc'),
-(5, 'chau', '4e07408562bedb8b60ce05c1decfe3ad16b72230967f1a2b4438a29d1f6e20ad', 'Châu'),
-(6, 'sang',  '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', 'Sang'),
-(7, 'suong', '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5', 'Suong');
+('aaa', '8D969EEF6ECAD3C29A3A629280E686CF0C3F5D5A86AFF3CA12020C923ADC6C92', 'aaa', 0, NULL, NULL),
+('bbb', '8D969EEF6ECAD3C29A3A629280E686CF0C3F5D5A86AFF3CA12020C923ADC6C92', 'bbb', 0, NULL, NULL),
+('ccc', '8D969EEF6ECAD3C29A3A629280E686CF0C3F5D5A86AFF3CA12020C923ADC6C92', 'ccc', 0, NULL, NULL),
+('ddd', '8D969EEF6ECAD3C29A3A629280E686CF0C3F5D5A86AFF3CA12020C923ADC6C92', 'ddd', 0, NULL, NULL),
+('eee', '8D969EEF6ECAD3C29A3A629280E686CF0C3F5D5A86AFF3CA12020C923ADC6C92', 'eee', 0, NULL, NULL),
+('fff', '8D969EEF6ECAD3C29A3A629280E686CF0C3F5D5A86AFF3CA12020C923ADC6C92', 'fff', 0, NULL, NULL);
+-- mk 123456
 
-INSERT INTO messages (SenderId, ReceiverId, Content, MessageType)
+INSERT INTO messages (SenderId, ReceiverId, Content, SentTime, IsRead)
 VALUES
-(5, 2, 'Hello người anh em, đây là tin nhắn gửi đến một người!', 0),
-(1, NULL, 'Chào mọi người! Lan đây.', 1),
-(NULL, NULL, 'SYSTEM: Server sẽ bảo trì lúc 23:00', 2),
-(2, 5, 'Hi mài, t nhận được rồi!', 0),
-(3, NULL, 'Yến chào mọi người!', 1),
-(4, NULL, 'Trúc cũng đang online nè!', 1),
-(5, NULL, 'Châu: Hello cả nhóm!', 1);
+-- ===== A → B =====
+(1, 2, 'Hi B, đây là tin nhắn 1 từ A.', '2025-01-01 09:00:00', 0),
+(1, 2, 'Tin nhắn 2 từ A.', '2025-01-01 09:01:00', 0),
+(1, 2, 'Tin nhắn 3 từ A.', '2025-01-01 09:02:00', 0),
+(1, 2, 'Tin nhắn 4 từ A.', '2025-01-01 09:03:00', 0),
+(1, 2, 'Tin nhắn 5 từ A.', '2025-01-01 09:04:00', 0),
+(1, 2, 'Tin nhắn 6 từ A.', '2025-01-01 09:05:00', 0),
+(1, 2, 'Tin nhắn 7 từ A.', '2025-01-01 09:06:00', 0),
+(1, 2, 'Tin nhắn 8 từ A.', '2025-01-01 09:07:00', 0),
+(1, 2, 'Tin nhắn 9 từ A.', '2025-01-01 09:08:00', 0),
+(1, 2, 'Tin nhắn 10 từ A.', '2025-01-01 09:09:00', 0),
 
+-- ===== B → C =====
+(2, 3, 'Tin 1 từ B đến C.', '2025-01-02 10:00:00', 0),
+(2, 3, 'Tin 2 từ B đến C.', '2025-01-02 10:01:00', 0),
+(2, 3, 'Tin 3 từ B đến C.', '2025-01-02 10:02:00', 0),
+(2, 3, 'Tin 4 từ B đến C.', '2025-01-02 10:03:00', 0),
+(2, 3, 'Tin 5 từ B đến C.', '2025-01-02 10:04:00', 0),
+(2, 3, 'Tin 6 từ B đến C.', '2025-01-02 10:05:00', 0),
+(2, 3, 'Tin 7 từ B đến C.', '2025-01-02 10:06:00', 0),
+(2, 3, 'Tin 8 từ B đến C.', '2025-01-02 10:07:00', 0),
+(2, 3, 'Tin 9 từ B đến C.', '2025-01-02 10:08:00', 0),
+(2, 3, 'Tin 10 từ B đến C.', '2025-01-02 10:09:00', 0),
 
--- PRIVATE
-INSERT INTO messages (SenderId, ReceiverId, Content, MessageType)
-VALUES (6, 7, 'Suong ơi, bạn nhận được tin nhắn này không?', 0);
+-- ===== C → D =====
+(3, 4, 'Tin nhắn C → D (1)', '2025-01-03 12:00:00', 0),
+(3, 4, 'Tin nhắn C → D (2)', '2025-01-03 12:01:00', 0),
+(3, 4, 'Tin nhắn C → D (3)', '2025-01-03 12:02:00', 0),
+(3, 4, 'Tin nhắn C → D (4)', '2025-01-03 12:03:00', 0),
+(3, 4, 'Tin nhắn C → D (5)', '2025-01-03 12:04:00', 0),
+(3, 4, 'Tin nhắn C → D (6)', '2025-01-03 12:05:00', 0),
+(3, 4, 'Tin nhắn C → D (7)', '2025-01-03 12:06:00', 0),
+(3, 4, 'Tin nhắn C → D (8)', '2025-01-03 12:07:00', 0),
+(3, 4, 'Tin nhắn C → D (9)', '2025-01-03 12:08:00', 0),
+(3, 4, 'Tin nhắn C → D (10)', '2025-01-03 12:09:00', 0),
 
-INSERT INTO messages (SenderId, ReceiverId, Content, MessageType)
-VALUES (7, 6, 'Sang, mình nhận được rồi nhé!', 0);
+-- ===== D → E =====
+(4, 5, 'D gửi E (1)', '2025-01-04 13:00:00', 0),
+(4, 5, 'D gửi E (2)', '2025-01-04 13:01:00', 0),
+(4, 5, 'D gửi E (3)', '2025-01-04 13:02:00', 0),
+(4, 5, 'D gửi E (4)', '2025-01-04 13:03:00', 0),
+(4, 5, 'D gửi E (5)', '2025-01-04 13:04:00', 0),
+(4, 5, 'D gửi E (6)', '2025-01-04 13:05:00', 0),
+(4, 5, 'D gửi E (7)', '2025-01-04 13:06:00', 0),
+(4, 5, 'D gửi E (8)', '2025-01-04 13:07:00', 0),
+(4, 5, 'D gửi E (9)', '2025-01-04 13:08:00', 0),
+(4, 5, 'D gửi E (10)', '2025-01-04 13:09:00', 0),
 
--- BROADCAST
-INSERT INTO messages (SenderId, ReceiverId, Content, MessageType)
-VALUES (6, NULL, 'Hello mọi người, Sang vừa vào phòng!', 1);
+-- ===== E → F =====
+(5, 6, 'E gửi F (1)', '2025-01-05 14:00:00', 0),
+(5, 6, 'E gửi F (2)', '2025-01-05 14:01:00', 0),
+(5, 6, 'E gửi F (3)', '2025-01-05 14:02:00', 0),
+(5, 6, 'E gửi F (4)', '2025-01-05 14:03:00', 0),
+(5, 6, 'E gửi F (5)', '2025-01-05 14:04:00', 0),
+(5, 6, 'E gửi F (6)', '2025-01-05 14:05:00', 0),
+(5, 6, 'E gửi F (7)', '2025-01-05 14:06:00', 0),
+(5, 6, 'E gửi F (8)', '2025-01-05 14:07:00', 0),
+(5, 6, 'E gửi F (9)', '2025-01-05 14:08:00', 0),
+(5, 6, 'E gửi F (10)', '2025-01-05 14:09:00', 0),
 
-INSERT INTO messages (SenderId, ReceiverId, Content, MessageType)
-VALUES (7, NULL, 'Chào cả nhà, Suong đã online!', 1);
+-- ===== F → A =====
+(6, 1, 'F nhắn A 1', '2025-01-06 15:00:00', 0),
+(6, 1, 'F nhắn A 2', '2025-01-06 15:01:00', 0),
+(6, 1, 'F nhắn A 3', '2025-01-06 15:02:00', 0),
+(6, 1, 'F nhắn A 4', '2025-01-06 15:03:00', 0),
+(6, 1, 'F nhắn A 5', '2025-01-06 15:04:00', 0),
+(6, 1, 'F nhắn A 6', '2025-01-06 15:05:00', 0),
+(6, 1, 'F nhắn A 7', '2025-01-06 15:06:00', 0),
+(6, 1, 'F nhắn A 8', '2025-01-06 15:07:00', 0),
+(6, 1, 'F nhắn A 9', '2025-01-06 15:08:00', 0),
+(6, 1, 'F nhắn A 10', '2025-01-06 15:09:00', 0),
 
--- SYSTEM
-INSERT INTO messages (SenderId, ReceiverId, Content, MessageType)
-VALUES (NULL, NULL, 'SYSTEM: Người dùng Sang đã đăng nhập.', 2);
-
-INSERT INTO messages (SenderId, ReceiverId, Content, MessageType)
-VALUES (NULL, NULL, 'SYSTEM: Suong đã thoát khỏi phòng.', 2);
-
-
-
+-- ===== Tin nhắn vòng 6 user =====
+(1, 3, 'A → C', '2025-02-01 09:00:00', 0),
+(3, 5, 'C → E', '2025-02-01 09:01:00', 0),
+(5, 2, 'E → B', '2025-02-01 09:02:00', 0),
+(2, 4, 'B → D', '2025-02-01 09:03:00', 0),
+(4, 6, 'D → F', '2025-02-01 09:04:00', 0),
+(6, 1, 'F → A', '2025-02-01 09:05:00', 0),
+(1, 4, 'A → D', '2025-02-01 09:06:00', 0),
+(4, 2, 'D → B', '2025-02-01 09:07:00', 0),
+(2, 6, 'B → F', '2025-02-01 09:08:00', 0),
+(6, 3, 'F → C', '2025-02-01 09:09:00', 0),
+(3, 1, 'C → A', '2025-02-01 09:10:00', 0),
+(5, 1, 'E → A', '2025-02-01 09:11:00', 0),
+(3, 2, 'C → B', '2025-02-01 09:12:00', 0),
+(4, 3, 'D → C', '2025-02-01 09:13:00', 0),
+(6, 5, 'F → E', '2025-02-01 09:14:00', 0);

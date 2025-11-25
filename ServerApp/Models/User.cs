@@ -10,6 +10,9 @@ namespace ServerApp.Models
 {
     public class User
     {
+        public int UserId { get; set; } = 0; // Guest = 0
+        public string? DisplayName { get; set; }
+
         public string Username { get; set; }
         public TcpClient Client { get; set; }
         public NetworkStream Stream { get; set; }

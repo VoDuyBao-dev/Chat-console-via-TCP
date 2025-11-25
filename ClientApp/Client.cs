@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Sockets;
-using System.Text;
+﻿using Common;
+using System;
 using System.Threading.Tasks;
 using ClientApp.Services;
 using ClientApp.Utilities;
@@ -52,55 +49,223 @@ namespace ClientApp
 
             // Bước 2: Kết nối TCP
             await _chat.ConnectAsync(serverIp, serverPort);
-            // Bắt đầu nhận tin nhắn - CHỈ GỌI 1 LẦN DUY NHẤT!
+
+            var session = new UserSession();
+
+            // Bắt đầu nhận tin nhắn từ server (duy nhất 1 lần)
             _chat.StartReceiving(message =>
             {
-                // Tất cả tin nhắn từ server đều đi qua đây → bạn làm gì cũng được!
-                if (message.StartsWith("[PRIVATE", StringComparison.OrdinalIgnoreCase))
-                    ConsoleLogger.Private(message);
-                else if (message.Contains("===LOGIN_SUCCESS===")) // server gửi cái này là login OK
-                    ConsoleLogger.Success("Đăng nhập thành công!\n");
-                else if (message.Contains("has joined") || message.Contains("Welcome") || message.Contains("Your username is now"))
-                    ConsoleLogger.Success(message);
-                else if (message.StartsWith("[SERVER]"))
+                if (message.Contains("===LOGIN_SUCCESS==="))
+                {
+                    ConsoleLogger.Success("Đăng nhập thành công! Bạn đã vào phòng chat.\n");
+                    session.Login("unknown"); // tên thật in trong message khác, tạm vậy
+                    // return;
+                }
+
+                if (message == "[DISCONNECTED]")
+                {
+                    ConsoleLogger.Error("Mất kết nối với server.");
+                    session.IsRunning = false;
+                    return;
+                }
+
+                if (message.StartsWith("[SERVER]"))
                     ConsoleLogger.Info(message);
+                else if (message.StartsWith("[PRIVATE", StringComparison.OrdinalIgnoreCase))
+                    ConsoleLogger.Private(message);
                 else
                     ConsoleLogger.Receive(message);
             });
 
-            // Đăng nhập: server hỏi gì thì in, người dùng nhập gì thì gửi
-            ConsoleLogger.Info("Đang chờ server yêu cầu tên...");
-            while (true)
+            // ===== VÒNG LẶP MENU Ở CLIENT =====
+            while (!session.IsLoggedIn && session.IsRunning)
             {
-                string? input = Console.ReadLine();
-                if (input == null) continue;
+                Console.ForegroundColor = ConsoleColor.Magenta;
+                Console.WriteLine("""
+                ===============================
+                [1] Đăng ký tài khoản
+                [2] Đăng nhập
+                [0] Vào với tư cách Guest
+                ===============================
+                """);
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.Write("Chọn: ");
+                var opt = Console.ReadLine();
 
-                await _chat.SendMessageAsync(input.Trim());
+                switch (opt)
+                {
+                    case "1":
+                        await HandleRegisterAsync();
+                        ConsoleLogger.Info("Đăng ký xong. Bạn có thể chọn [2] để đăng nhập.");
+                        break;
 
-                // Dừng vòng lặp khi thấy dấu hiệu login thành công
-                // (Bạn có thể để server gửi một dòng đặc biệt như ===LOGIN_SUCCESS===)
-                // Hoặc kiểm tra tin nhắn gần nhất có chứa từ khóa join/welcome
-                // Cách đơn giản: đợi 1 lúc rồi break (vì tin nhắn welcome đã được in bởi callback)
-                await Task.Delay(800); // đợi server phản hồi
-                ConsoleLogger.Success("Đăng nhập thành công! Bắt đầu chat...\n");
-                break;
+                    case "2":
+                        await HandleLoginAsync();
+                        ConsoleLogger.Info("Đang chờ server xác nhận đăng nhập...");
+                        // chờ callback StartReceiving set IsLoggedIn = true
+                        await Task.Delay(500);
+                        break;
+
+                    case "0":
+                        await _chat.SendMessageAsync("GUEST");
+                        ConsoleLogger.Info("Đang vào phòng chat với tư cách Guest...");
+                        await Task.Delay(500);
+                        break;
+
+                    default:
+                        ConsoleLogger.Error("Lựa chọn không hợp lệ. Vui lòng chọn 0,1,2.");
+                        break;
+                }
             }
 
-            // Chat chính
+            if (!session.IsRunning)
+            {
+                ConsoleLogger.Error("Kết nối đã bị đóng. Thoát client.");
+                return;
+            }
+
+            // ===== VÒNG LẶP CHAT CHÍNH =====
             ConsoleLogger.Info("Gõ tin nhắn, dùng /pm <tên> <nội dung>, hoặc 'exit' để thoát.\n");
             while (true)
             {
                 string? input = Console.ReadLine();
                 if (input == null) continue;
+
                 if (input.Equals("exit", StringComparison.OrdinalIgnoreCase))
                 {
                     await _chat.SendMessageAsync("exit");
                     break;
                 }
+
                 await _chat.SendMessageAsync(input);
             }
 
             _chat.Disconnect();
+        }
+
+        // ============ VALIDATION HỖ TRỢ ===============
+        private bool IsInvalid(string? input) => string.IsNullOrWhiteSpace(input);
+
+        private bool ContainsIllegalChars(string input)
+        {
+            char[] illegal = { '|', '/', '\\', ':', ';', '\'', '"', '<', '>', '{', '}', '[', ']' };
+            return input.Any(c => illegal.Contains(c));
+        }
+
+        // ============ REGISTER ===============
+        private async Task HandleRegisterAsync()
+        {
+            string u, p, d;
+
+            // Username
+            while (true)
+            {
+                Console.Write("Username: ");
+                u = Console.ReadLine()!.Trim();
+
+                if (IsInvalid(u))
+                {
+                    ConsoleLogger.Error("Username không được bỏ trống.");
+                    continue;
+                }
+                if (u.Length < 3)
+                {
+                    ConsoleLogger.Error("Username phải có ít nhất 3 ký tự.");
+                    continue;
+                }
+                if (ContainsIllegalChars(u))
+                {
+                    ConsoleLogger.Error("Username chứa ký tự không hợp lệ.");
+                    continue;
+                }
+                break;
+            }
+
+            // Password
+            while (true)
+            {
+                Console.Write("Password: ");
+                p = Console.ReadLine()!;
+
+                if (IsInvalid(p))
+                {
+                    ConsoleLogger.Error("Password không được bỏ trống.");
+                    continue;
+                }
+                if (p.Length < 6)
+                {
+                    ConsoleLogger.Error("Password phải có ít nhất 6 ký tự.");
+                    continue;
+                }
+                break;
+            }
+
+            // Display name
+            while (true)
+            {
+                Console.Write("Tên hiển thị: ");
+                d = Console.ReadLine()!.Trim();
+
+                if (IsInvalid(d))
+                {
+                    ConsoleLogger.Error("Tên hiển thị không được bỏ trống.");
+                    continue;
+                }
+                if (d.Length < 2)
+                {
+                    ConsoleLogger.Error("Tên hiển thị phải dài hơn 1 ký tự.");
+                    continue;
+                }
+                if (ContainsIllegalChars(d))
+                {
+                    ConsoleLogger.Error("Tên hiển thị chứa ký tự không hợp lệ.");
+                    continue;
+                }
+                break;
+            }
+
+            string passHash = Utils.PasswordHasher.SHA256Hash(p); // dùng Utils.HashPassword trong Common
+            await _chat.SendMessageAsync($"REGISTER|{u}|{passHash}|{d}");
+        }
+
+        // ============ LOGIN ===============
+        private async Task HandleLoginAsync()
+        {
+            string u, p;
+
+            while (true)
+            {
+                Console.Write("Username: ");
+                u = Console.ReadLine()!.Trim();
+
+                if (IsInvalid(u))
+                {
+                    ConsoleLogger.Error("Username không được bỏ trống.");
+                    continue;
+                }
+                if (ContainsIllegalChars(u))
+                {
+                    ConsoleLogger.Error("Username chứa ký tự không hợp lệ.");
+                    continue;
+                }
+                break;
+            }
+
+            while (true)
+            {
+                Console.Write("Password: ");
+                p = Console.ReadLine()!;
+
+                if (IsInvalid(p))
+                {
+                    ConsoleLogger.Error("Password không được bỏ trống.");
+                    continue;
+                }
+                break;
+            }
+
+            string passHash = Utils.PasswordHasher.SHA256Hash(p);
+            await _chat.SendMessageAsync($"LOGIN|{u}|{passHash}");
         }
     }
 }
