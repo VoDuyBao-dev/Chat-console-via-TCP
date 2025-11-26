@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Common
+﻿namespace Common
 {
-    internal class Protocol
+    public static class Protocol
     {
+        public const char Split = '|';
+        public const string REGISTER = "REGISTER";
+        public const string LOGIN = "LOGIN";
     }
 }
