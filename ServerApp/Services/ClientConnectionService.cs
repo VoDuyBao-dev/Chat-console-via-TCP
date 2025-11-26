@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Net.Sockets;
 using System.Text;
+using Common;
 using ServerApp.Models;
 using ServerApp.Utilities;
 
@@ -10,10 +11,16 @@ namespace ServerApp.Services
     public class ClientConnectionService
     {
         private readonly ConcurrentDictionary<string, User> _clients = new();
+        private readonly DatabaseService _db;
 
+        public ClientConnectionService()
+        {
+            string conn = ConfigService.GetConnectionString();
+            _db = new DatabaseService(conn);
+        }
         public void HandleNewClient(TcpClient tcpClient)
         {
-         
+
             _ = ProcessClientAsync(tcpClient);
         }
 
@@ -24,90 +31,102 @@ namespace ServerApp.Services
 
             try
             {
+                // ===== GIAI ĐOẠN AUTH (REGISTER/LOGIN/GUEST) =====
+                bool inChat = false;
 
-                // Yêu cầu nhập username
-                await user.Writer.WriteLineAsync("Please enter your username:");
-                await user.Writer.FlushAsync();
-
-                // Đọc username
-                string? username = await NetworkHelper.SafeReadLineAsync(user.Stream);
-
-                if (string.IsNullOrWhiteSpace(username))
-                    username = "Guest";
-                else
-                    username = username.Trim();
-
-                // Xử lý trùng tên
-                // Vòng lặp xử lý trùng tên - cho người dùng chọn
-                while (true)
+                while (!inChat)
                 {
-                    // Kiểm tra tên đã tồn tại chưa
-                    if (!_clients.ContainsKey(username))
+                    string? line = await NetworkHelper.SafeReadLineAsync(user.Stream);
+                    if (line == null)
                     {
-                        // Tên hợp lệ, thoát vòng lặp
-                        user.Username = username;
-                        _clients.TryAdd(username, user);
-                        break;
+                        // client đóng trước khi auth
+                        return;
                     }
 
-                    // Tên đã tồn tại → đề xuất tên mới
-                    string suggestedName = GenerateSuggestedName(username);
-
-                    await user.Writer.WriteLineAsync($"""
-                        [SERVER] The username "{username}" is already taken!
-                        Suggested: {suggestedName}
-
-                        Choose an option:
-                        1. Enter a new username
-                        2. Use suggested username ({suggestedName})
-                        Type 1 or 2:
-                        """);
-                    await user.Writer.FlushAsync();
-
-                    string? choice = await NetworkHelper.SafeReadLineAsync(user.Stream);
-                    if (choice == "2")
+                    // REGISTER|u|hash|display
+                    if (line.StartsWith("REGISTER|", StringComparison.OrdinalIgnoreCase))
                     {
-                        username = suggestedName;
-                        user.Username = username;
-                        _clients.TryAdd(username, user);
-                        await user.Writer.WriteLineAsync($"[SERVER] Your username is now: {username}");
-                        break;
-                    }
-                    else if (choice == "1" || string.IsNullOrEmpty(choice))
-                    {
-                        await user.Writer.WriteLineAsync("Enter a new username:");
-                        await user.Writer.FlushAsync();
-
-                        string? newName = await NetworkHelper.SafeReadLineAsync(user.Stream);
-                        if (string.IsNullOrWhiteSpace(newName))
+                        var parts = line.Split('|');
+                        if (parts.Length < 4)
                         {
-                            await user.Writer.WriteLineAsync("[SERVER] Username cannot be empty! Try again.");
-                            await user.Writer.FlushAsync();
+                            await user.Writer.WriteLineAsync("[SERVER] REGISTER không hợp lệ.");
                             continue;
                         }
-                        username = newName.Trim();
+
+                        string regUser = parts[1];
+                        string regPassHash = parts[2];
+                        string display = parts[3];
+
+                        if (await _db.UsernameOrDisplayExistsAsync(regUser, display))
+                        {
+                            await user.Writer.WriteLineAsync("[SERVER] Username hoặc DisplayName đã tồn tại!");
+                            continue;
+                        }
+
+                        await _db.RegisterAsync(regUser, regPassHash, display);
+                        await user.Writer.WriteLineAsync("[SERVER] Đăng ký thành công! Bạn có thể dùng menu client để đăng nhập.");
+                        continue; // vẫn ở giai đoạn auth
                     }
-                    else
+
+                    // LOGIN|u|hash
+                    if (line.StartsWith("LOGIN|", StringComparison.OrdinalIgnoreCase))
                     {
-                        await user.Writer.WriteLineAsync("[SERVER] Invalid option! Please type 1 or 2.");
-                        await user.Writer.FlushAsync();
+                        var parts = line.Split('|');
+                        if (parts.Length < 3)
+                        {
+                            await user.Writer.WriteLineAsync("[SERVER] LOGIN không hợp lệ.");
+                            continue;
+                        }
+
+                        string loginUser = parts[1];
+                        string loginHash = parts[2];
+
+                        var record = await _db.LoginAsync(loginUser, loginHash);
+                        if (record == null)
+                        {
+                            await user.Writer.WriteLineAsync("[SERVER] Sai username hoặc password.");
+                            continue;
+                        }
+
+                        user.UserId = record.Value.UserId;
+                        user.Username = loginUser;
+                        user.DisplayName = record.Value.DisplayName;
+
+                        await _db.SetOnlineAsync(user.UserId);
+                        _clients.TryAdd(user.Username, user);
+
+                        await user.Writer.WriteLineAsync("===LOGIN_SUCCESS===");
+                        inChat = true;
+                        break;
                     }
+
+                    // GUEST
+                    if (line.Equals("GUEST", StringComparison.OrdinalIgnoreCase))
+                    {
+                        user.UserId = 0;
+                        user.Username = "Guest_" + Random.Shared.Next(1000, 9999);
+
+                        _clients.TryAdd(user.Username, user);
+
+                        await user.Writer.WriteLineAsync("===LOGIN_SUCCESS===");
+                        inChat = true;
+                        break;
+                    }
+
+                    await user.Writer.WriteLineAsync("[SERVER] Lệnh không hợp lệ ở giai đoạn đăng nhập.");
                 }
 
-                    // 2. Thông báo join
-                    ConsoleLogger.Join($"{user.Username} ({endpoint}) has joined");
+                // ===== ĐÃ VÀO PHÒNG CHAT =====
+
+                ConsoleLogger.Join($"{user.Username} ({endpoint}) has joined");
                 await BroadcastAsync($"[SERVER] {user.Username} has joined the room! (Online: {_clients.Count})");
                 await BroadcastUserListAsync();
 
-                await user.Writer.WriteLineAsync("===LOGIN_SUCCESS==="); // Dấu hiệu cho client biết đã login OK
-                await user.Writer.FlushAsync();
-
-                // 3. Gửi hướng dẫn
                 await user.Writer.WriteLineAsync(
-                    $"Welcome {user.Username}! Type /pm <username> <message> for private chat, or 'exit' to leave.");
+                    $"Welcome {user.Username}! Dùng /pm <username> <message> để chat riêng (user thật), 'exit' để thoát.");
                 await user.Writer.FlushAsync();
 
-                // 4. Vòng lặp nhận tin nhắn
+                // ===== VÒNG LẶP CHAT =====
                 string? message;
                 while ((message = await NetworkHelper.SafeReadLineAsync(user.Stream)) != null)
                 {
@@ -133,10 +152,12 @@ namespace ServerApp.Services
             }
             finally
             {
-                // 5. Dọn dẹp
                 _clients.TryRemove(user.Username, out _);
 
-                ConsoleLogger.Info($"{user.Username} ({endpoint}) has disconected");
+                if (user.UserId != 0)
+                    await _db.SetOfflineAsync(user.UserId);
+
+                ConsoleLogger.Info($"{user.Username} ({endpoint}) has disconnected");
                 await BroadcastAsync($"[SERVER] {user.Username} has left the room!");
                 await BroadcastUserListAsync();
 
@@ -144,10 +165,12 @@ namespace ServerApp.Services
             }
         }
 
+
+
         //tạo tên gợi ý
         private string GenerateSuggestedName(string original)
         {
-           
+
             for (int i = 2; i < 100; i++)
             {
                 string candidate = $"{original}_{i}";
@@ -174,6 +197,14 @@ namespace ServerApp.Services
                 return;
             }
 
+            // KHÔNG CHO GUEST GỬI PRIVATE
+            if (sender.UserId == 0)
+            {
+                await sender.Writer.WriteLineAsync("[SERVER] Guest không được gửi tin nhắn riêng!");
+                return;
+            }
+
+
             string targetName = parts[0];
             string msg = parts[1];
 
@@ -183,6 +214,8 @@ namespace ServerApp.Services
                 await target.Writer.WriteLineAsync(privateMsg);
                 await sender.Writer.WriteLineAsync($"[Gửi riêng → {targetName}]: {msg}");
                 ConsoleLogger.Private($"{sender.Username} → {targetName}: {msg}");
+                await _db.SaveMessageAsync(sender.UserId, target.UserId, msg);
+
             }
             else
             {

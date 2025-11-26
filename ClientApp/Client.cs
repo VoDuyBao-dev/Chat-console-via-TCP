@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Sockets;
-using System.Text;
+﻿using Common;
+using System;
 using System.Threading.Tasks;
 using ClientApp.Services;
 using ClientApp.Utilities;
@@ -19,7 +16,6 @@ namespace ClientApp
             Console.Title = "Chat LAN Client - Nhóm 11";
             ConsoleLogger.Info("=== CHÀO MỪNG ĐẾN VỚI CHAT LAN ===");
 
-            // Bước 1: Tìm server
             var servers = await _discovery.DiscoverServersAsync(TimeSpan.FromSeconds(8));
 
             string serverIp;
@@ -50,53 +46,94 @@ namespace ClientApp
                 ConsoleLogger.Success($"Đã chọn: {selected.Name}");
             }
 
-            // Bước 2: Kết nối TCP
             await _chat.ConnectAsync(serverIp, serverPort);
-            // Bắt đầu nhận tin nhắn - CHỈ GỌI 1 LẦN DUY NHẤT!
+
+            var session = new UserSession();
+            var register = new RegisterService(_chat);
+            var login = new LoginService(_chat);
+
             _chat.StartReceiving(message =>
             {
-                // Tất cả tin nhắn từ server đều đi qua đây → bạn làm gì cũng được!
-                if (message.StartsWith("[PRIVATE", StringComparison.OrdinalIgnoreCase))
-                    ConsoleLogger.Private(message);
-                else if (message.Contains("===LOGIN_SUCCESS===")) // server gửi cái này là login OK
-                    ConsoleLogger.Success("Đăng nhập thành công!\n");
-                else if (message.Contains("has joined") || message.Contains("Welcome") || message.Contains("Your username is now"))
-                    ConsoleLogger.Success(message);
-                else if (message.StartsWith("[SERVER]"))
+                if (message.Contains("===LOGIN_SUCCESS==="))
+                {
+                    ConsoleLogger.Success("Đăng nhập thành công! Bạn đã vào phòng chat.\n");
+                    session.Login("unknown");
+                }
+
+                if (message == "[DISCONNECTED]")
+                {
+                    ConsoleLogger.Error("Mất kết nối với server.");
+                    session.IsRunning = false;
+                    return;
+                }
+
+                if (message.StartsWith("[SERVER]"))
                     ConsoleLogger.Info(message);
+                else if (message.StartsWith("[PRIVATE", StringComparison.OrdinalIgnoreCase))
+                    ConsoleLogger.Private(message);
                 else
                     ConsoleLogger.Receive(message);
             });
 
-            // Đăng nhập: server hỏi gì thì in, người dùng nhập gì thì gửi
-            ConsoleLogger.Info("Đang chờ server yêu cầu tên...");
-            while (true)
+            // MENU
+            while (!session.IsLoggedIn && session.IsRunning)
             {
-                string? input = Console.ReadLine();
-                if (input == null) continue;
+                Console.ForegroundColor = ConsoleColor.Magenta;
+                Console.WriteLine("""
+                ===============================
+                [1] Đăng ký tài khoản
+                [2] Đăng nhập
+                [0] Vào với tư cách Guest
+                ===============================
+                """);
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.Write("Chọn: ");
+                var opt = Console.ReadLine();
 
-                await _chat.SendMessageAsync(input.Trim());
+                switch (opt)
+                {
+                    case "1":
+                        await register.HandleRegisterAsync();
+                        // ConsoleLogger.Info("Đăng ký xong. Bạn có thể chọn [2] để đăng nhập.");
+                        break;
 
-                // Dừng vòng lặp khi thấy dấu hiệu login thành công
-                // (Bạn có thể để server gửi một dòng đặc biệt như ===LOGIN_SUCCESS===)
-                // Hoặc kiểm tra tin nhắn gần nhất có chứa từ khóa join/welcome
-                // Cách đơn giản: đợi 1 lúc rồi break (vì tin nhắn welcome đã được in bởi callback)
-                await Task.Delay(800); // đợi server phản hồi
-                ConsoleLogger.Success("Đăng nhập thành công! Bắt đầu chat...\n");
-                break;
+                    case "2":
+                        await login.HandleLoginAsync();
+                        ConsoleLogger.Info("Đang chờ server xác nhận đăng nhập...");
+                        await Task.Delay(500);
+                        break;
+
+                    case "0":
+                        await _chat.SendMessageAsync("GUEST");
+                        ConsoleLogger.Info("Đang vào phòng chat với tư cách Guest...");
+                        await Task.Delay(500);
+                        break;
+
+                    default:
+                        ConsoleLogger.Error("Lựa chọn không hợp lệ. Vui lòng chọn 0,1,2.");
+                        break;
+                }
             }
 
-            // Chat chính
+            if (!session.IsRunning)
+            {
+                ConsoleLogger.Error("Kết nối đã bị đóng. Thoát client.");
+                return;
+            }
+
+            // CHAT LOOP 
             ConsoleLogger.Info("Gõ tin nhắn, dùng /pm <tên> <nội dung>, hoặc 'exit' để thoát.\n");
             while (true)
             {
                 string? input = Console.ReadLine();
                 if (input == null) continue;
+
                 if (input.Equals("exit", StringComparison.OrdinalIgnoreCase))
                 {
                     await _chat.SendMessageAsync("exit");
                     break;
                 }
+
                 await _chat.SendMessageAsync(input);
             }
 
