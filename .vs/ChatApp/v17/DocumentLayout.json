@@ -11,12 +11,12 @@
       "RelativeMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|solutionrelative:serverapp.tests\\serverstoptest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{AD159313-D0B3-4552-AB1F-E444C6CE593C}|ClientApp\\ClientApp.csproj|d:\\network\\chat-console-via-tcp\\clientapp\\chatclient.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AD159313-D0B3-4552-AB1F-E444C6CE593C}|ClientApp\\ClientApp.csproj|solutionrelative:clientapp\\chatclient.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|d:\\network\\chat-console-via-tcp\\serverapp.tests\\serverapp.tests.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
       "RelativeMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|solutionrelative:serverapp.tests\\serverapp.tests.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\Network\\Chat-console-via-TCP\\ClientApp\\ChatClient.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:ClientApp\\ChatClient.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -26,11 +26,15 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{e1b7d1f8-9b3c-49b1-8f4f-bfc63a88835d}"
             },
             {
               "$type": "Document",
@@ -47,7 +51,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 3,
               "Title": "ChatClient.cs",
               "DocumentMoniker": "D:\\Network\\Chat-console-via-TCP\\ClientApp\\ChatClient.cs",
               "RelativeDocumentMoniker": "ClientApp\\ChatClient.cs",
@@ -59,7 +63,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 2,
               "Title": "ServerApp.Tests.csproj",
               "DocumentMoniker": "D:\\Network\\Chat-console-via-TCP\\ServerApp.Tests\\ServerApp.Tests.csproj",
               "RelativeDocumentMoniker": "ServerApp.Tests\\ServerApp.Tests.csproj",
