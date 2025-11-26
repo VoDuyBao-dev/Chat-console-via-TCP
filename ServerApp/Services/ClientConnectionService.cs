@@ -64,7 +64,7 @@ namespace ServerApp.Services
                         }
 
                         await _db.RegisterAsync(regUser, regPassHash, display);
-                        // await user.Writer.WriteLineAsync("[SERVER] Đăng ký thành công! Bạn có thể dùng menu client để đăng nhập.");
+                        await user.Writer.WriteLineAsync("[SERVER] Đăng ký thành công! Bạn có thể dùng menu client để đăng nhập.");
                         continue; // vẫn ở giai đoạn auth
                     }
 
