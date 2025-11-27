@@ -9,7 +9,7 @@ namespace ServerApp.Tests
     public class ServerStopTests
     {
         [Fact]
-        public void Server_Stop_KiemTraKetNoiVaDungKhongLoi()
+        public void Server_Stop_ClientConnectionToServer()
         {
             int port = 5055;
             bool daNhanKetNoiTruocKhiStop = false;
@@ -29,9 +29,6 @@ namespace ServerApp.Tests
 
             Console.WriteLine();
             Console.WriteLine("Server đang hoạt động.");
-            Console.WriteLine("Cách kết nối thử:");
-            Console.WriteLine($" - telnet 127.0.0.1 {port}");
-            Console.WriteLine($" - sử dụng TcpClient(\"127.0.0.1\", {port})");
             Console.WriteLine();
 
             // Mô phỏng client kết nối
