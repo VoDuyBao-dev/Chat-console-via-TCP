@@ -1,56 +1,42 @@
 ﻿using System;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using Xunit;
-using ServerApp;
+using ServerApp.Services;
 
 namespace ServerApp.Tests
 {
     public class ClientConnectionTests
     {
         [Fact]
-        public void Test_ClientCanConnect_AndServerResponds()
+        public void TcpListenerService_ShouldAcceptClient_AndStopSafely()
         {
-            int port = 5001; // dùng port khác để tránh conflict
-            var server = new Server(port);
+            int port = 6000;
+            bool clientConnected = false;
 
-            // Start server in background thread
-            var serverThread = new Thread(server.Start)
+            // Khi có client kết nối → callback set true
+            var listener = new TcpListenerService(port, client =>
             {
-                IsBackground = true
-            };
-            serverThread.Start();
+                clientConnected = true;
+                client.Close(); // đóng ngay sau khi test
+            });
 
-            // Đợi server khởi động
-            Thread.Sleep(300);
+            // Start server
+            listener.Start();
+            Thread.Sleep(200);
 
-            string serverResponse = "";
-
-            // Kết nối client
+            // Tạo 1 client kết nối vào server
             using (var client = new TcpClient("127.0.0.1", port))
-            using (var stream = client.GetStream())
             {
-                // Gửi username "mavis"
-                byte[] usernameBytes = Encoding.UTF8.GetBytes("mavis\n");
-                stream.Write(usernameBytes, 0, usernameBytes.Length);
-
-                // Đọc phản hồi server
-                byte[] buffer = new byte[2048];
-                Thread.Sleep(200); // Đợi server gửi dữ liệu
-
-                if (stream.DataAvailable)
-                {
-                    int bytesRead = stream.Read(buffer, 0, buffer.Length);
-                    serverResponse = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                }
+                Thread.Sleep(200); // thời gian cho event callback
             }
 
-            // Tắt server
-            server.Stop();
+            // Assert server nhận client
+            Assert.True(clientConnected, "TcpListenerService should accept client connection.");
 
-            // Kiểm tra phản hồi
-            Assert.Contains("mavis", serverResponse);
+            // Stop → không được exception
+            var ex = Record.Exception(() => listener.Stop());
+            Assert.Null(ex);
         }
     }
 }

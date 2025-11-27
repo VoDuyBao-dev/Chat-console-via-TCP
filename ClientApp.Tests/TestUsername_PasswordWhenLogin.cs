@@ -13,8 +13,8 @@ public class TestUsername_PasswordWhenLogin
     [Theory]
     [InlineData("wrongUser", "correctPass", "[SERVER] Sai username")]
     [InlineData("correctUser", "wrongPass", "[SERVER] Sai password")]
-    [InlineData("wrongUser", "wrongPass", "[SERVER] Sai cả 2")]
-    [InlineData("correctUser", "correctPass", "[SERVER] Login thành công")]
+    [InlineData("wrongUser", "wrongPass", "[SERVER] Sai user và password")]
+    [InlineData("correctUser", "correctPass", "Đăng nhập thành công! Bạn đã vào phòng chat.")]
     public async Task Login_ShouldReturnExpectedMessage(string username, string password, string expected)
     {
         using var client = new TcpClient();

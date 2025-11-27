@@ -3,6 +3,14 @@
   "WorkspaceRootPath": "D:\\Network\\Chat-console-via-TCP\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|d:\\network\\chat-console-via-tcp\\serverapp.tests\\serverstoptest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|solutionrelative:serverapp.tests\\serverstoptest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|d:\\network\\chat-console-via-tcp\\serverapp.tests\\clientconnectiontests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|solutionrelative:serverapp.tests\\clientconnectiontests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{24A8EB49-8A1C-4832-A397-F4CC1ACB2E1F}|ClientApp.Tests\\ClientApp.Tests.csproj|d:\\network\\chat-console-via-tcp\\clientapp.tests\\testusername_passwordwhenlogin.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{24A8EB49-8A1C-4832-A397-F4CC1ACB2E1F}|ClientApp.Tests\\ClientApp.Tests.csproj|solutionrelative:clientapp.tests\\testusername_passwordwhenlogin.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
@@ -23,6 +31,32 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "ServerStopTest.cs",
+              "DocumentMoniker": "D:\\Network\\Chat-console-via-TCP\\ServerApp.Tests\\ServerStopTest.cs",
+              "RelativeDocumentMoniker": "ServerApp.Tests\\ServerStopTest.cs",
+              "ToolTip": "D:\\Network\\Chat-console-via-TCP\\ServerApp.Tests\\ServerStopTest.cs",
+              "RelativeToolTip": "ServerApp.Tests\\ServerStopTest.cs",
+              "ViewState": "AgIAAD0AAAAAAAAAAAAgwEYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-27T14:34:27.001Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "ClientConnectionTests.cs",
+              "DocumentMoniker": "D:\\Network\\Chat-console-via-TCP\\ServerApp.Tests\\ClientConnectionTests.cs",
+              "RelativeDocumentMoniker": "ServerApp.Tests\\ClientConnectionTests.cs",
+              "ToolTip": "D:\\Network\\Chat-console-via-TCP\\ServerApp.Tests\\ClientConnectionTests.cs",
+              "RelativeToolTip": "ServerApp.Tests\\ClientConnectionTests.cs",
+              "ViewState": "AgIAABkAAAAAAAAAAAAQwA8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-27T14:29:52.71Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
               "Title": "TestUsername_PasswordWhenLogin.cs",
               "DocumentMoniker": "D:\\Network\\Chat-console-via-TCP\\ClientApp.Tests\\TestUsername_PasswordWhenLogin.cs",
               "RelativeDocumentMoniker": "ClientApp.Tests\\TestUsername_PasswordWhenLogin.cs",

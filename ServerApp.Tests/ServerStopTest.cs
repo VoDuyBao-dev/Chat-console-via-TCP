@@ -2,42 +2,75 @@ using System;
 using System.Net.Sockets;
 using System.Threading;
 using Xunit;
-using ServerApp;
+using ServerApp.Services;
 
 namespace ServerApp.Tests
 {
     public class ServerStopTests
     {
         [Fact]
-        public void Test_ServerStop_CleansUpClientsAndListener()
+        public void Server_Stop_KiemTraKetNoiVaDungKhongLoi()
         {
-            int port = 5000;
-            var server = new Server(port);
+            int port = 5055;
+            bool daNhanKetNoiTruocKhiStop = false;
 
-            // Start server trong thread riêng
-            var serverThread = new Thread(server.Start)
+            Console.WriteLine("=== BẮT ĐẦU KIỂM THỬ SERVER STOP ===");
+            Console.WriteLine("Khởi động TCP server...");
+
+            var server = new TcpListenerService(port, client =>
             {
-                IsBackground = true
-            };
-            serverThread.Start();
+                daNhanKetNoiTruocKhiStop = true;
+                Console.WriteLine("Server đã nhận kết nối từ client.");
+                client.Close();
+            });
 
-            // Đợi server ready
-            Thread.Sleep(300);
+            server.Start();
+            Thread.Sleep(300); // đợi server lắng nghe cổng
 
-            // Kết nối một client để kiểm tra client list
+            Console.WriteLine();
+            Console.WriteLine("Server đang hoạt động.");
+            Console.WriteLine("Cách kết nối thử:");
+            Console.WriteLine($" - telnet 127.0.0.1 {port}");
+            Console.WriteLine($" - sử dụng TcpClient(\"127.0.0.1\", {port})");
+            Console.WriteLine();
+
+            // Mô phỏng client kết nối
+            Console.WriteLine("Tiến hành mô phỏng kết nối client tới server...");
             using (var client = new TcpClient("127.0.0.1", port))
             {
-                Thread.Sleep(100); // đợi server accept client
+                Thread.Sleep(150);
             }
 
-            // Stop server
-            server.Stop();
+            Assert.True(daNhanKetNoiTruocKhiStop,
+                "Server phải nhận được ít nhất 1 client trước khi dừng.");
 
-            // Sau stop, _clients phải empty và listener dừng
-            // (không thể trực tiếp check private _clients, nhưng test sẽ fail nếu có exception khi stop)
-            // Nếu cần, có thể dùng reflection để kiểm tra _clients count = 0
-            // Ở đây test cơ bản: stop không throw exception
-            Assert.True(true, "Server stopped without exceptions.");
+            Console.WriteLine();
+            Console.WriteLine("Dừng server...");
+            var ex = Record.Exception(() => server.Stop());
+            Assert.Null(ex);
+
+            Console.WriteLine("Server đã dừng thành công, không phát sinh lỗi.");
+
+            // Kiểm tra sau khi stop -> không được kết nối thêm
+            bool ketNoiSauStop = false;
+
+            try
+            {
+                using (var client = new TcpClient("127.0.0.1", port))
+                {
+                    ketNoiSauStop = true;
+                }
+            }
+            catch
+            {
+                Console.WriteLine("Sau khi stop, client không thể kết nối nữa (đúng).");
+            }
+
+            Assert.False(ketNoiSauStop,
+                "Sau khi Stop(), server phải từ chối kết nối mới.");
+
+            Console.WriteLine();
+            Console.WriteLine("=== KẾT THÚC TEST ===");
         }
     }
 }
