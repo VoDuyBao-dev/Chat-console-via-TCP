@@ -50,8 +50,9 @@ namespace ServerApp.Services
                 try
                 {
                     var endpoint = new IPEndPoint(IPAddress.Broadcast, _udpPort);
+                   
                     await udpClient.SendAsync(data, data.Length, endpoint);
-                    ConsoleLogger.Broadcast($"sent discovery: {message}");
+                   // ConsoleLogger.Broadcast($"sent discovery: {message}");
                 }
                 catch (Exception ex)
                 {
