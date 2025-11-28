@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Common;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
@@ -19,18 +20,20 @@ namespace ClientApp.Tests
             bool passCorrect = userExists && UserDatabase[username] == password;
 
             if (!userExists)
-                return "[SERVER] Sai Username.";  
+                return "[SERVER] Incorrect username.";  
             else if (!passCorrect)
-                return "[SERVER] Sai Password.";  
-            return "Đăng nhập thành công! Bạn đã vào phòng chat.";  
+                return "[SERVER] Incorrect password.";  
+            return "Login OK! Welcome to the chat room.";
 
         }
 
         private static string ActualServerLoginMessage(string username, string password)
         {
-            if (!UserDatabase.ContainsKey(username) || UserDatabase[username] != password)
-                return "[SERVER] Sai username hoặc password.";
-            return "Đăng nhập thành công! Bạn đã vào phòng chat.";
+            if (!UserDatabase.ContainsKey(username)) 
+                return "[SERVER] Incorrect username.";
+            else if (UserDatabase[username] != password)
+                return "[SERVER] Incorrect password.";
+            return "Login OK! Welcome to the chat room.";
         }
 
         [Theory]
