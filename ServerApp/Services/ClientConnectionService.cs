@@ -13,10 +13,20 @@ namespace ServerApp.Services
         private readonly ConcurrentDictionary<string, User> _clients = new();
         private readonly DatabaseService _db;
 
+        private readonly AuthService _auth;
+        private readonly ChatCommandService _commands;
+
         public ClientConnectionService()
         {
             string conn = ConfigService.GetConnectionString();
             _db = new DatabaseService(conn);
+
+            _auth = new AuthService(_db, _clients);
+
+            _commands = new ChatCommandService(
+                _clients,
+                _db,
+                (msg, exclude) => BroadcastAsync(msg, exclude));
         }
         public void HandleNewClient(TcpClient tcpClient)
         {
@@ -31,118 +41,84 @@ namespace ServerApp.Services
 
             try
             {
-                // ===== GIAI ĐOẠN AUTH (REGISTER/LOGIN/GUEST) =====
-                bool inChat = false;
-
-                while (!inChat)
+                // AUTH PHASE
+                while (true)
                 {
-                    string? line = await NetworkHelper.SafeReadLineAsync(user.Stream);
-                    if (line == null)
+                    string? raw = await NetworkHelper.SafeReadLineAsync(user.Stream);
+                    if (raw == null) return;
+
+                    var msg = MessageParser.Parse(raw);
+
+                    AuthResult result = msg.Command switch
                     {
-                        // client đóng trước khi auth
-                        return;
+                        Protocol.REGISTER => await _auth.HandleRegisterAsync(user, msg.Args),
+                        Protocol.LOGIN => await _auth.HandleLoginAsync(user, msg.Args),
+                        _ => AuthResult.Fail("[SERVER] Invalid authentication command.")
+                    };
+
+                    if (!result.Success)
+                    {
+                        await user.Writer.WriteLineAsync(result.ErrorMessage);
+                        continue;
                     }
 
-                    // REGISTER|u|hash|display
-                    if (line.StartsWith("REGISTER|", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var parts = line.Split('|');
-                        if (parts.Length < 4)
-                        {
-                            await user.Writer.WriteLineAsync("[SERVER] REGISTER không hợp lệ.");
-                            continue;
-                        }
-
-                        string regUser = parts[1];
-                        string regPassHash = parts[2];
-                        string display = parts[3];
-
-                        if (await _db.UsernameOrDisplayExistsAsync(regUser, display))
-                        {
-                            await user.Writer.WriteLineAsync("[SERVER] Username hoặc DisplayName đã tồn tại!");
-                            continue;
-                        }
-
-                        await _db.RegisterAsync(regUser, regPassHash, display);
-                        await user.Writer.WriteLineAsync("[SERVER] Đăng ký thành công! Bạn có thể dùng menu client để đăng nhập.");
-                        continue; // vẫn ở giai đoạn auth
-                    }
-
-                    // LOGIN|u|hash
-                    if (line.StartsWith("LOGIN|", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var parts = line.Split('|');
-                        if (parts.Length < 3)
-                        {
-                            await user.Writer.WriteLineAsync("[SERVER] LOGIN không hợp lệ.");
-                            continue;
-                        }
-
-                        string loginUser = parts[1];
-                        string loginHash = parts[2];
-
-                        var record = await _db.LoginAsync(loginUser, loginHash);
-                        if (record == null)
-                        {
-                            await user.Writer.WriteLineAsync("[SERVER] Sai username hoặc password.");
-                            continue;
-                        }
-
-                        user.UserId = record.Value.UserId;
-                        user.Username = loginUser;
-                        user.DisplayName = record.Value.DisplayName;
-
-                        await _db.SetOnlineAsync(user.UserId);
-                        _clients.TryAdd(user.Username, user);
-
-                        await user.Writer.WriteLineAsync("===LOGIN_SUCCESS===");
-                        inChat = true;
-                        break;
-                    }
-
-                    // GUEST
-                    if (line.Equals("GUEST", StringComparison.OrdinalIgnoreCase))
-                    {
-                        user.UserId = 0;
-                        user.Username = "Guest_" + Random.Shared.Next(1000, 9999);
-
-                        _clients.TryAdd(user.Username, user);
-
-                        await user.Writer.WriteLineAsync("===LOGIN_SUCCESS===");
-                        inChat = true;
-                        break;
-                    }
-
-                    await user.Writer.WriteLineAsync("[SERVER] Lệnh không hợp lệ ở giai đoạn đăng nhập.");
+                    // Login/Register succeeded
+                    await user.Writer.WriteLineAsync(result.SuccessToken);
+                    break;
                 }
 
-                // ===== ĐÃ VÀO PHÒNG CHAT =====
 
+                // JOIN ROOM
                 ConsoleLogger.Join($"{user.Username} ({endpoint}) has joined");
                 await BroadcastAsync($"[SERVER] {user.Username} has joined the room! (Online: {_clients.Count})");
-                await BroadcastUserListAsync();
+                // await BroadcastUserListAsync();
+                await _commands.HandleHelpAsync(user);
 
-                await user.Writer.WriteLineAsync(
-                    $"Welcome {user.Username}! Dùng /pm <username> <message> để chat riêng (user thật), 'exit' để thoát.");
+                // await user.Writer.WriteLineAsync($"Welcome {user.Username}! '/help' for commands.");
                 await user.Writer.FlushAsync();
 
                 // ===== VÒNG LẶP CHAT =====
-                string? message;
-                while ((message = await NetworkHelper.SafeReadLineAsync(user.Stream)) != null)
+                while (true)
                 {
-                    if (message.Equals("exit", StringComparison.OrdinalIgnoreCase))
-                        break;
+                    string? raw = await NetworkHelper.SafeReadLineAsync(user.Stream);
+                    if (raw == null) break;
 
-                    if (string.IsNullOrWhiteSpace(message))
-                        continue;
+                    var msg = MessageParser.Parse(raw);
 
-                    if (message.StartsWith("/pm ", StringComparison.OrdinalIgnoreCase))
+                    switch (msg.Command)
                     {
-                        await HandlePrivateMessageAsync(user, message);
-                    }
-                    else
-                    {
-                        await BroadcastAsync($"[{user.Username}]: {message}", user);
+                        // PUBLIC MESSAGE
+                        case Protocol.MSG:
+                            if (msg.Args.Length > 0)
+                                await _commands.HandlePublicAsync(user, msg.Args[0]);
+                            break;
+                        // PRIVATE MESSAGE
+                        case Protocol.PM:
+                            if (msg.Args.Length < 2)
+                            {
+                                await user.Writer.WriteLineAsync("[SERVER] Usage: PM|<user>|<msg>");
+                                break;
+                            }
+                            await _commands.HandlePrivateMessageAsync(user, msg.Args[0], msg.Args[1]);
+                            break;
+
+                        // USER LIST
+                        case Protocol.USERS:
+                            await _commands.HandleUsersAsync(user);
+                            break;
+
+                        // HELP
+                        case Protocol.HELP:
+                            await _commands.HandleHelpAsync(user);
+                            break;
+
+                        // EXIT
+                        case Protocol.EXIT:
+                            return;
+
+                        default:
+                            await user.Writer.WriteLineAsync("[SERVER] Unknown command.");
+                            break;
                     }
                 }
             }
@@ -188,40 +164,7 @@ namespace ServerApp.Services
             }
         }
 
-        private async Task HandlePrivateMessageAsync(User sender, string input)
-        {
-            var parts = input["/pm ".Length..].Trim().Split(' ', 2);
-            if (parts.Length < 2)
-            {
-                await sender.Writer.WriteLineAsync("[SERVER] Sai cú pháp! Dùng: /pm Tên Tin nhắn");
-                return;
-            }
 
-            // KHÔNG CHO GUEST GỬI PRIVATE
-            if (sender.UserId == 0)
-            {
-                await sender.Writer.WriteLineAsync("[SERVER] Guest không được gửi tin nhắn riêng!");
-                return;
-            }
-
-
-            string targetName = parts[0];
-            string msg = parts[1];
-
-            if (_clients.TryGetValue(targetName, out User? target))
-            {
-                string privateMsg = $"[PRIVATE từ {sender.Username}]: {msg}";
-                await target.Writer.WriteLineAsync(privateMsg);
-                await sender.Writer.WriteLineAsync($"[Gửi riêng → {targetName}]: {msg}");
-                ConsoleLogger.Private($"{sender.Username} → {targetName}: {msg}");
-                await _db.SaveMessageAsync(sender.UserId, target.UserId, msg);
-
-            }
-            else
-            {
-                await sender.Writer.WriteLineAsync($"[SERVER] Không tìm thấy người dùng: {targetName}");
-            }
-        }
 
         // Đổi Broadcast thành async để không block thread
         private async Task BroadcastAsync(string message, User? exclude = null)

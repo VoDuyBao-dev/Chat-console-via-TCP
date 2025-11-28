@@ -16,34 +16,34 @@ namespace ClientApp
             Console.Title = "Chat LAN Client - Nhóm 11";
             ConsoleLogger.Info("=== CHÀO MỪNG ĐẾN VỚI CHAT LAN ===");
 
-            var servers = await _discovery.DiscoverServersAsync(TimeSpan.FromSeconds(8));
+            var servers = await _discovery.DiscoverServersAsync(TimeSpan.FromSeconds(4));
 
             string serverIp;
             int serverPort;
 
             if (servers.Count == 0)
             {
-                ConsoleLogger.Info("Không tìm thấy server tự động. Nhập thủ công:");
+                ConsoleLogger.Info("No server found. Enter manually:");
                 Console.Write("IP Server: ");
                 serverIp = Console.ReadLine()!.Trim();
-                Console.Write("Port (mặc định 5000): ");
+                Console.Write("Port (default 5000): ");
                 var portInput = Console.ReadLine();
                 serverPort = string.IsNullOrEmpty(portInput) ? 5000 : int.Parse(portInput);
             }
             else
             {
-                ConsoleLogger.Info($"\nTìm thấy {servers.Count} server:");
+                ConsoleLogger.Info($"\nFound {servers.Count} server(s):");
                 for (int i = 0; i < servers.Count; i++)
                     Console.WriteLine($"  [{i + 1}] {servers[i]}");
 
-                Console.Write("\nChọn server (nhập số): ");
+                Console.Write("\nChoose server (index): ");
                 if (!int.TryParse(Console.ReadLine(), out int choice) || choice < 1 || choice > servers.Count)
                     choice = 1;
 
                 var selected = servers[choice - 1];
                 serverIp = selected.Ip;
                 serverPort = selected.Port;
-                ConsoleLogger.Success($"Đã chọn: {selected.Name}");
+                ConsoleLogger.Success($"Selected: {selected.Name}");
             }
 
             await _chat.ConnectAsync(serverIp, serverPort);
@@ -54,16 +54,34 @@ namespace ClientApp
 
             _chat.StartReceiving(message =>
             {
-                if (message.Contains("===LOGIN_SUCCESS==="))
+                if (message.Contains("LOGIN_SUCCESS"))
                 {
-                    ConsoleLogger.Success("Đăng nhập thành công! Bạn đã vào phòng chat.\n");
+                    ConsoleLogger.Success("Login OK! Welcome to the chat room.\n");
                     session.Login("unknown");
+                    return;
+                }
+
+                if (message.Contains("REGISTER_SUCCESS"))
+                {
+                    ConsoleLogger.Success("Registration successful! You are now logged into the chat room.\n");
+                    session.Login("unknown");
+                    return;
                 }
 
                 if (message == "[DISCONNECTED]")
                 {
-                    ConsoleLogger.Error("Mất kết nối với server.");
+                    ConsoleLogger.Error("Disconnected from server.");
                     session.IsRunning = false;
+                    return;
+                }
+
+                // Nếu CHƯA đăng nhập mà nhận [SERVER] ... thì coi đó là kết quả AUTH (sai username/password,...)
+                if (!session.IsLoggedIn && message.StartsWith("[SERVER]"))
+                {
+                    // In thông báo lỗi từ server
+                    ConsoleLogger.Info(message);
+                    // Cho phép menu hiện lại
+                    session.ResetAuthWait();
                     return;
                 }
 
@@ -78,42 +96,44 @@ namespace ClientApp
             // MENU
             while (!session.IsLoggedIn && session.IsRunning)
             {
+                // Nếu đang chờ server trả lời, không in menu thêm, chỉ đợi
+                if (session.IsWaitingAuth)
+                {
+                    await Task.Delay(100); // tránh busy-wait
+                    continue;
+                }
+
                 Console.ForegroundColor = ConsoleColor.Magenta;
                 Console.WriteLine("""
-                ===============================
-                [1] Đăng ký tài khoản
-                [2] Đăng nhập
-                [0] Vào với tư cách Guest
-                ===============================
-                """);
+                    ===============================
+                    [1] Register
+                    [2] Login
+                    ===============================
+                    """);
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.Write("Chọn: ");
+                Console.Write("Select: ");
                 var opt = Console.ReadLine();
 
                 switch (opt)
                 {
                     case "1":
-                        await register.HandleRegisterAsync();
-                        // ConsoleLogger.Info("Đăng ký xong. Bạn có thể chọn [2] để đăng nhập.");
+                        await register.HandleRegisterAsync(maskPassword: true);
+                        session.IsWaitingAuth = true;
+                        ConsoleLogger.Info("Waiting for server response...");
                         break;
 
                     case "2":
-                        await login.HandleLoginAsync();
-                        ConsoleLogger.Info("Đang chờ server xác nhận đăng nhập...");
-                        await Task.Delay(500);
-                        break;
-
-                    case "0":
-                        await _chat.SendMessageAsync("GUEST");
-                        ConsoleLogger.Info("Đang vào phòng chat với tư cách Guest...");
-                        await Task.Delay(500);
+                        await login.HandleLoginAsync(maskPassword: true);
+                        session.IsWaitingAuth = true;
+                        ConsoleLogger.Info("Waiting for server response...");
                         break;
 
                     default:
-                        ConsoleLogger.Error("Lựa chọn không hợp lệ. Vui lòng chọn 0,1,2.");
+                        ConsoleLogger.Error("Invalid option.");
                         break;
                 }
             }
+
 
             if (!session.IsRunning)
             {
@@ -121,21 +141,87 @@ namespace ClientApp
                 return;
             }
 
+            // ConsoleLogger.Info("""
+
+            //     === Chat Commands ===
+            //     /help                - Show command list
+            //     /users               - Show online users
+            //     /pm <user> <msg>     - Private message
+            //     exit                 - Leave room
+            // """);
+
+
             // CHAT LOOP 
-            ConsoleLogger.Info("Gõ tin nhắn, dùng /pm <tên> <nội dung>, hoặc 'exit' để thoát.\n");
+            // CHAT LOOP 
             while (true)
             {
                 string? input = Console.ReadLine();
                 if (input == null) continue;
 
-                if (input.Equals("exit", StringComparison.OrdinalIgnoreCase))
+                input = input.Trim();
+                if (input == "") continue;
+
+                // EXIT
+                if (input.Equals("exit", StringComparison.OrdinalIgnoreCase) ||
+                    input.Equals("/exit", StringComparison.OrdinalIgnoreCase))
                 {
-                    await _chat.SendMessageAsync("exit");
+                    await _chat.SendMessageAsync("EXIT");
                     break;
                 }
 
-                await _chat.SendMessageAsync(input);
+                // USERS
+                if (input.Equals("users", StringComparison.OrdinalIgnoreCase) ||
+                    input.Equals("/users", StringComparison.OrdinalIgnoreCase))
+                {
+                    await _chat.SendMessageAsync("USERS");
+                    continue;
+                }
+
+                // HELP
+                if (input.Equals("help", StringComparison.OrdinalIgnoreCase) ||
+                    input.Equals("/help", StringComparison.OrdinalIgnoreCase))
+                {
+                    await _chat.SendMessageAsync("HELP");
+                    continue;
+                }
+
+                // PRIVATE MESSAGE
+                if (input.StartsWith("/pm ", StringComparison.OrdinalIgnoreCase) ||
+                    input.StartsWith("pm ", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Bỏ prefix "/pm " hoặc "pm "
+                    string content = input.StartsWith("/pm ", StringComparison.OrdinalIgnoreCase)
+                        ? input[4..].Trim()
+                        : input[3..].Trim();
+
+                    // Tách ra 2 phần: username + message
+                    var parts = content.Split(' ', 2);
+
+                    if (parts.Length != 2)
+                    {
+                        ConsoleLogger.Error("Usage: /pm <username> <message>");
+                        continue;
+                    }
+
+                    string target = parts[0];
+                    string msg = parts[1];
+
+                    await _chat.SendMessageAsync($"PM|{target}|{msg}");
+                    continue;
+                }
+
+                // PUBLIC MESSAGE
+                if (!input.StartsWith("/"))
+                {
+                    await _chat.SendMessageAsync($"MSG|{input}");
+                    continue;
+                }
+
+                // UNKNOWN COMMAND
+                ConsoleLogger.Error($"Unknown command: {input}. Type /help for commands.");
             }
+
+
 
             _chat.Disconnect();
         }
