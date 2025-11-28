@@ -38,7 +38,7 @@ namespace ServerApp.Services
             }
 
             // Prevent sending PM to yourself
-            if (string.Equals(sender.DisplayName, targetName, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(sender.DisplayName, targetName, StringComparison.Ordinal))
             {
                 await sender.Writer.WriteLineAsync("[SERVER] You cannot send a private message to yourself.");
                 return;
@@ -46,7 +46,7 @@ namespace ServerApp.Services
 
             // Find target by DisplayName
             User? target = _clients.Values
-                .FirstOrDefault(u => string.Equals(u.DisplayName, targetName, StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefault(u => string.Equals(u.DisplayName, targetName, StringComparison.Ordinal));
 
 
             if (target != null)

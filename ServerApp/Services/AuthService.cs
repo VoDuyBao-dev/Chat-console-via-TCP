@@ -61,10 +61,15 @@ namespace ServerApp.Services
             string username = args[0];
             string passHash = args[1];
 
+            if (_clients.ContainsKey(username))
+                return AuthResult.Fail("[SERVER] This account is already logged in.");
+
+
             // 1) Lấy user theo username
             var dbUser = await _db.GetUserByUsernameAsync(username);
             if (dbUser == null)
                 return AuthResult.Fail("[SERVER] Incorrect username.");
+            
 
             // 2) Kiểm tra password
             if (!string.Equals(dbUser.Value.PasswordHash, passHash, StringComparison.Ordinal))
@@ -74,7 +79,6 @@ namespace ServerApp.Services
             user.UserId = dbUser.Value.UserId;
             user.Username = username;
             user.DisplayName = dbUser.Value.DisplayName;
-
             await _db.SetOnlineAsync(user.UserId);
             _clients.TryAdd(user.Username, user);
 

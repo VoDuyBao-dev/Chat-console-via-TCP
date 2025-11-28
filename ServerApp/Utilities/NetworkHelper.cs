@@ -18,7 +18,7 @@ namespace ServerApp.Utilities
                 using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0);
 
                 // không gửi dữ liệu thật, chỉ để hệ điều hành chọn interface đúng
-                socket.Connect("8.8.8.8", 65530);
+                socket.Connect("8.8.8.8", 65530); 
 
                 // Lấy địa chỉ IPv4 cục bộ đang dùng để ra Internet hoặc LAN
                 return (socket.LocalEndPoint as IPEndPoint)?.Address;
@@ -28,6 +28,18 @@ namespace ServerApp.Utilities
                 return null;
             }
         }
+
+        // public static void PrintLocalIPs(int port)
+        // {
+        //     Console.WriteLine("\nIP to connect from another device in the LAN:");
+        //     foreach (var ip in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
+        //     {
+        //         if (ip.AddressFamily == AddressFamily.InterNetwork)
+        //             Console.WriteLine($" → {ip}:{port}");
+        //     }
+        //     Console.WriteLine();
+        // }
+
         public static async Task<string?> SafeReadLineAsync(NetworkStream stream)
         {
             try
