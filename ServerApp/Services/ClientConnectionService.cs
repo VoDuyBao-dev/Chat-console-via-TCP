@@ -69,12 +69,12 @@ namespace ServerApp.Services
 
 
                 // JOIN ROOM
-                ConsoleLogger.Join($"{user.Username} ({endpoint}) has joined");
-                await BroadcastAsync($"[SERVER] {user.Username} has joined the room! (Online: {_clients.Count})");
+                ConsoleLogger.Join($"{user.DisplayName} ({endpoint}) has joined");
+                await BroadcastAsync($"[SERVER] {user.DisplayName} has joined the room! (Online: {_clients.Count})");
                 // await BroadcastUserListAsync();
                 await _commands.HandleHelpAsync(user);
 
-                // await user.Writer.WriteLineAsync($"Welcome {user.Username}! '/help' for commands.");
+                // await user.Writer.WriteLineAsync($"Welcome {user.DisplayName}! '/help' for commands.");
                 await user.Writer.FlushAsync();
 
                 // ===== VÒNG LẶP CHAT =====
@@ -129,12 +129,13 @@ namespace ServerApp.Services
             finally
             {
                 _clients.TryRemove(user.Username, out _);
-
+                
+ 
                 if (user.UserId != 0)
                     await _db.SetOfflineAsync(user.UserId);
 
-                ConsoleLogger.Info($"{user.Username} ({endpoint}) has disconnected");
-                await BroadcastAsync($"[SERVER] {user.Username} has left the room!");
+                ConsoleLogger.Info($"{user.DisplayName} ({endpoint}) has disconnected");
+                await BroadcastAsync($"[SERVER] {user.DisplayName} has left the room!");
                 await BroadcastUserListAsync();
 
                 tcpClient.Close();
@@ -194,7 +195,7 @@ namespace ServerApp.Services
             var sb = new StringBuilder("========== Online ==========\n");
             foreach (var u in _clients.Values)
             {
-                sb.AppendLine($" - {u.Username} ({u.Client.Client.RemoteEndPoint})");
+                sb.AppendLine($" - {u.DisplayName} ({u.Client.Client.RemoteEndPoint})");
             }
             sb.Append("============================");
             await BroadcastAsync(sb.ToString());
