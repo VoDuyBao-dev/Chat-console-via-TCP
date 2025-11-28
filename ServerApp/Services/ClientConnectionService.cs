@@ -166,7 +166,7 @@ namespace ServerApp.Services
 
 
 
-        // Đổi Broadcast thành async để không block thread
+        
         private async Task BroadcastAsync(string message, User? exclude = null)
         {
             var tasks = new List<Task>();
@@ -181,7 +181,7 @@ namespace ServerApp.Services
                 }
                 catch
                 {
-                    // Client đã ngắt, sẽ được dọn ở finally
+                    
                 }
             }
 

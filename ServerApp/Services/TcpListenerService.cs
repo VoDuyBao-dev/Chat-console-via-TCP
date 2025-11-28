@@ -28,7 +28,7 @@ namespace ServerApp.Services
             _listener = new TcpListener(IPAddress.Any, _port);
             _listener.Start();
 
-            NetworkHelper.PrintLocalIPs(_port);
+            // NetworkHelper.PrintLocalIPs(_port);
 
             Task.Run(AcceptLoop);
         }

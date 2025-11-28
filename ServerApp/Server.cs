@@ -29,6 +29,7 @@ namespace ServerApp
             _udpService.Start();
             _tcpService.Start();
             ConsoleLogger.Success($"Server running on TCP {AppSettings.Current.TcpPort} | UDP Discovery {AppSettings.Current.UdpPort}");
+            ConsoleLogger.Info($"Server is sending broadcast");
         }
 
         public void Stop()
