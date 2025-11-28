@@ -219,7 +219,6 @@ namespace ClientApp
                     string target = parts[0];
                     string msg = parts[1];
 
-                    ConsoleLogger.Error($"Sending private message to {target}: {msg}");
 
                     await _chat.SendMessageAsync($"PM|{target}|{msg}");
                     continue;
