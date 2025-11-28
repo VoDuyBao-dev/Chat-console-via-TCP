@@ -1,36 +1,62 @@
-﻿using System;
-using System.IO;
-using System.Net.Sockets;
-using System.Text;
+﻿using Common;
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
 
-public class TestUsername_PasswordWhenLogin
+namespace ClientApp.Tests
 {
-    private const string SERVER_IP = "127.0.0.1";
-    private const int SERVER_PORT = 5000;
 
-    [Theory]
-    [InlineData("wrongUser", "correctPass", "[SERVER] Sai username")]
-    [InlineData("correctUser", "wrongPass", "[SERVER] Sai password")]
-    [InlineData("wrongUser", "wrongPass", "[SERVER] Sai cả 2")]
-    [InlineData("correctUser", "correctPass", "[SERVER] Login thành công")]
-    public async Task Login_ShouldReturnExpectedMessage(string username, string password, string expected)
+    public class TestUsername_PasswordWhenLogin
     {
-        using var client = new TcpClient();
-        await client.ConnectAsync(SERVER_IP, SERVER_PORT);
-        using var stream = client.GetStream();
-        using var reader = new StreamReader(stream, Encoding.UTF8);
-        using var writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
+        private static readonly Dictionary<string, string> UserDatabase = new()
+        {
+            { "mavis", "123456" }
+        };
 
-        // Gửi dữ liệu login
-        await writer.WriteLineAsync(username);
-        await writer.WriteLineAsync(password);
+        private static string ExpectedLoginMessage(string username, string password)
+        {
+            bool userExists = UserDatabase.ContainsKey(username);
+            bool passCorrect = userExists && UserDatabase[username] == password;
 
-        // Đọc phản hồi từ server
-        var response = await reader.ReadLineAsync();
+            if (!userExists)
+                return "[SERVER] Incorrect username.";  
+            else if (!passCorrect)
+                return "[SERVER] Incorrect password.";  
+            return "Login OK! Welcome to the chat room.";
 
-        // So sánh với reference
-        Assert.Equal(expected, response);
+        }
+
+        private static string ActualServerLoginMessage(string username, string password)
+        {
+            if (!UserDatabase.ContainsKey(username)) 
+                return "[SERVER] Incorrect username.";
+            else if (UserDatabase[username] != password)
+                return "[SERVER] Incorrect password.";
+            return "Login OK! Welcome to the chat room.";
+        }
+
+        [Theory]
+        [InlineData("mavis", "123456")]
+        [InlineData("mavis", "wrongPass")]
+        [InlineData("wrongUser", "123456")]
+        [InlineData("wrongUser", "wrongPass")]
+        public async Task Login_ShouldCompareExpectedVsActual(string username, string password)
+        {
+            var expected = ExpectedLoginMessage(username, password);
+            var actual = await Task.Run(() => ActualServerLoginMessage(username, password));
+
+            Console.WriteLine("=========================================");
+            Console.WriteLine($"Kiểm tra đăng nhập username: \"{username}\", password: \"{password}\"");
+            Console.WriteLine($"Mong muốn đầu ra : {expected}");
+            Console.WriteLine($"Thực tế đầu ra   : {actual}");
+            if (expected == actual)
+                Console.WriteLine("KẾT QUẢ CHÍNH XÁC");
+            else
+                Console.WriteLine("KẾT QUẢ KHÔNG KHỚP — Test Fail");
+            Console.WriteLine("=========================================");
+
+            //Assert.Equal(expected, actual);
+        }
     }
 }

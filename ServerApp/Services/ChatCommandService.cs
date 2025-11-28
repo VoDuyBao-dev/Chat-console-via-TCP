@@ -69,10 +69,11 @@ namespace ServerApp.Services
         // USERS
         public async Task HandleUsersAsync(User sender)
         {
+            var onlineUser = _clients.Values.Where(u => u.UserId != sender.UserId);
             var sb = new StringBuilder("===== Online Users =====\n");
 
-            foreach (var u in _clients.Values)
-                sb.AppendLine($" - {u.Username}");
+            foreach (var u in onlineUser)
+                sb.AppendLine($" - {u.DisplayName}");
 
             sb.Append("=========================");
             await sender.Writer.WriteLineAsync(sb.ToString());

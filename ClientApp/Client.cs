@@ -36,9 +36,22 @@ namespace ClientApp
                 for (int i = 0; i < servers.Count; i++)
                     Console.WriteLine($"  [{i + 1}] {servers[i]}");
 
-                Console.Write("\nChoose server (index): ");
-                if (!int.TryParse(Console.ReadLine(), out int choice) || choice < 1 || choice > servers.Count)
-                    choice = 1;
+                int choice = 0;
+                while (true)
+                {
+                    Console.Write("\nChoose server (index): ");
+                    var input = Console.ReadLine();
+
+                    if (!int.TryParse(input, out choice) ||
+                        choice < 1 ||
+                        choice > servers.Count)
+                    {
+                        ConsoleLogger.Error("Invalid selection! Please enter a valid number from the list");
+                        continue;
+                    }
+
+                    break; 
+                }
 
                 var selected = servers[choice - 1];
                 serverIp = selected.Ip;
