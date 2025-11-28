@@ -19,7 +19,6 @@ namespace ClientApp.Services
         private Action<string>? _onMessageReceived;
 
         public bool IsConnected => _client?.Connected == true;
-
         public async Task ConnectAsync(string ip, int port)
         {
             _client = new TcpClient();
