@@ -1,7 +1,6 @@
 using System;
 using System.Threading.Tasks;
 using ClientApp.Utilities;
-using ClientApp.Services;
 using Common;
 
 namespace ClientApp.Services
@@ -15,79 +14,85 @@ namespace ClientApp.Services
             _chat = chat;
         }
 
-        public async Task HandleRegisterAsync()
+        public async Task HandleRegisterAsync(bool maskPassword = false)
         {
-            string u, p, d;
+            string username, password, display;
 
-            // Username
+            // USERNAME
             while (true)
             {
                 Console.Write("Username: ");
-                u = Console.ReadLine()!.Trim();
+                username = Console.ReadLine()!.Trim();
 
-                if (InputValidator.IsInvalid(u))
+                if (InputValidator.IsInvalid(username))
                 {
-                    ConsoleLogger.Error("Username không được bỏ trống.");
+                    ConsoleLogger.Error("Username cannot be empty.");
                     continue;
                 }
-                if (u.Length < 3)
+                if (username.Length < 3)
                 {
-                    ConsoleLogger.Error("Username phải có ít nhất 3 ký tự.");
+                    ConsoleLogger.Error("Username must be at least 3 characters.");
                     continue;
                 }
-                if (InputValidator.ContainsIllegalChars(u))
+                if (InputValidator.ContainsIllegalChars(username))
                 {
-                    ConsoleLogger.Error("Username chứa ký tự không hợp lệ.");
+                    ConsoleLogger.Error("Username contains illegal characters.");
                     continue;
                 }
                 break;
             }
 
-            // Password
+            // PASSWORD
             while (true)
             {
                 Console.Write("Password: ");
-                p = Console.ReadLine()!;
 
-                if (InputValidator.IsInvalid(p))
+                if (maskPassword)
+                    password = InputValidator.ReadPassword();
+                else
+                    password = Console.ReadLine()!;
+
+                if (InputValidator.IsInvalid(password))
                 {
-                    ConsoleLogger.Error("Password không được bỏ trống.");
+                    ConsoleLogger.Error("Password cannot be empty.");
                     continue;
                 }
-                if (p.Length < 6)
+                if (password.Length < 6)
                 {
-                    ConsoleLogger.Error("Password phải có ít nhất 6 ký tự.");
+                    ConsoleLogger.Error("Password must be at least 6 characters.");
                     continue;
                 }
                 break;
             }
 
-            // Display name
+            // DISPLAY NAME
             while (true)
             {
-                Console.Write("Tên hiển thị: ");
-                d = Console.ReadLine()!.Trim();
+                Console.Write("Display name: ");
+                display = Console.ReadLine()!.Trim();
 
-                if (InputValidator.IsInvalid(d))
+                if (InputValidator.IsInvalid(display))
                 {
-                    ConsoleLogger.Error("Tên hiển thị không được bỏ trống.");
+                    ConsoleLogger.Error("Display name cannot be empty.");
                     continue;
                 }
-                if (d.Length < 2)
+                if (display.Length < 2)
                 {
-                    ConsoleLogger.Error("Tên hiển thị phải dài hơn 1 ký tự.");
+                    ConsoleLogger.Error("Display name must be at least 2 characters.");
                     continue;
                 }
-                if (InputValidator.ContainsIllegalChars(d))
+                if (InputValidator.ContainsIllegalChars(display))
                 {
-                    ConsoleLogger.Error("Tên hiển thị chứa ký tự không hợp lệ.");
+                    ConsoleLogger.Error("Display name contains illegal characters.");
                     continue;
                 }
                 break;
             }
 
-            string passHash = Utils.PasswordHasher.SHA256Hash(p);
-            await _chat.SendMessageAsync($"REGISTER|{u}|{passHash}|{d}");
+            string passHash = Utils.PasswordHasher.SHA256Hash(password);
+
+            // Client chỉ gửi request — server phản hồi
+            await _chat.SendMessageAsync($"REGISTER|{username}|{passHash}|{display}");
         }
     }
 }

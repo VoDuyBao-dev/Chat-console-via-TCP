@@ -12,8 +12,8 @@ namespace ClientApp.Utilities
         public static void Success(string msg) => Write(msg, ConsoleColor.Green);
         public static void Info(string msg) => Write(msg, ConsoleColor.Cyan);
         public static void Receive(string msg) => Write(msg, ConsoleColor.Yellow);
-        public static void Private(string msg) => Write($"[PRIVATE] {msg}", ConsoleColor.Magenta);
-        public static void Error(string msg) => Write($"[LỖI] {msg}", ConsoleColor.Red);
+        public static void Private(string msg) => Write($"{msg}", ConsoleColor.Magenta);
+        public static void Error(string msg) => Write($"[ERROR] {msg}", ConsoleColor.Red);
 
         private static void Write(string msg, ConsoleColor color)
         {

@@ -14,18 +14,33 @@ namespace ServerApp.Services
 
         private MySqlConnection GetConn() => new MySqlConnection(_connStr);
 
-        public async Task<bool> UsernameOrDisplayExistsAsync(string username, string displayName)
+        public async Task<bool> DisplayExistsAsync(string displayName)
         {
             using var conn = GetConn();
             await conn.OpenAsync();
 
             string sql = @"SELECT COUNT(*) 
                    FROM users 
-                   WHERE Username = @u OR DisplayName = @d";
+                   WHERE  DisplayName = @d";
+
+            var cmd = new MySqlCommand(sql, conn);
+            // cmd.Parameters.AddWithValue("@u", username);
+            cmd.Parameters.AddWithValue("@d", displayName);
+
+            long count = (long)await cmd.ExecuteScalarAsync();
+            return count > 0;
+        }
+
+        public async Task<bool> UsernameExistsAsync(string username)
+        {
+            using var conn = GetConn();
+            await conn.OpenAsync();
+
+            string sql = "SELECT COUNT(*) FROM users WHERE Username=@u";
 
             var cmd = new MySqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@u", username);
-            cmd.Parameters.AddWithValue("@d", displayName);
+
 
             long count = (long)await cmd.ExecuteScalarAsync();
             return count > 0;
@@ -48,30 +63,24 @@ namespace ServerApp.Services
             return await cmd.ExecuteNonQueryAsync() > 0;
         }
 
-        public async Task<(int UserId, string DisplayName)?> LoginAsync(string username, string passwordHash)
+
+        public async Task<bool> PasswordMatchAsync(string username, string passwordHash)
         {
             using var conn = GetConn();
             await conn.OpenAsync();
 
-            string sql = @"SELECT UserId, DisplayName 
-                           FROM users
-                           WHERE Username=@u AND PasswordHash=@p";
+            string sql = @"SELECT 1 FROM users 
+                   WHERE Username=@u AND PasswordHash=@p 
+                   LIMIT 1";
 
             var cmd = new MySqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@u", username);
             cmd.Parameters.AddWithValue("@p", passwordHash);
 
-            using var reader = await cmd.ExecuteReaderAsync();
-            if (await reader.ReadAsync())
-            {
-                int userId = reader.GetInt32(0);  // UserId là cột đầu tiên
-                string displayName = reader.IsDBNull(1) ? "" : reader.GetString(1);
-
-                return (userId, displayName);
-            }
-
-            return null;
+            var result = await cmd.ExecuteScalarAsync();
+            return result != null;
         }
+
 
         public async Task SetOnlineAsync(int userId)
         {
@@ -117,6 +126,33 @@ namespace ServerApp.Services
             cmd.Parameters.AddWithValue("@c", content);
 
             await cmd.ExecuteNonQueryAsync();
+        }
+
+        public async Task<(int UserId, string DisplayName, string PasswordHash)?> GetUserByUsernameAsync(string username)
+        {
+            using var conn = GetConn();
+            await conn.OpenAsync();
+
+            string sql = @"SELECT UserId, DisplayName, PasswordHash
+                   FROM users
+                   WHERE Username=@u
+                   LIMIT 1";
+
+            var cmd = new MySqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@u", username);
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                return
+                (
+                    reader.GetInt32(0),
+                    reader.IsDBNull(1) ? "" : reader.GetString(1),
+                    reader.GetString(2)
+                );
+            }
+
+            return null;
         }
     }
 }
