@@ -3,16 +3,8 @@
   "WorkspaceRootPath": "D:\\Network\\Chat-console-via-TCP\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{24A8EB49-8A1C-4832-A397-F4CC1ACB2E1F}|ClientApp.Tests\\ClientApp.Tests.csproj|d:\\network\\chat-console-via-tcp\\clientapp.tests\\testreconnecttoserver.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{24A8EB49-8A1C-4832-A397-F4CC1ACB2E1F}|ClientApp.Tests\\ClientApp.Tests.csproj|solutionrelative:clientapp.tests\\testreconnecttoserver.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AD159313-D0B3-4552-AB1F-E444C6CE593C}|ClientApp\\ClientApp.csproj|d:\\network\\chat-console-via-tcp\\clientapp\\client.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AD159313-D0B3-4552-AB1F-E444C6CE593C}|ClientApp\\ClientApp.csproj|solutionrelative:clientapp\\client.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|d:\\network\\chat-console-via-tcp\\serverapp.tests\\clientconnectiontests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|solutionrelative:serverapp.tests\\clientconnectiontests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|d:\\network\\chat-console-via-tcp\\serverapp.tests\\onlientclientprint.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|solutionrelative:serverapp.tests\\onlientclientprint.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -35,40 +27,14 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "TestReconnectToServer.cs",
-              "DocumentMoniker": "D:\\Network\\Chat-console-via-TCP\\ClientApp.Tests\\TestReconnectToServer.cs",
-              "RelativeDocumentMoniker": "ClientApp.Tests\\TestReconnectToServer.cs",
-              "ToolTip": "D:\\Network\\Chat-console-via-TCP\\ClientApp.Tests\\TestReconnectToServer.cs",
-              "RelativeToolTip": "ClientApp.Tests\\TestReconnectToServer.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAABJAAAAAAAAAA==",
+              "Title": "OnlientClientPrint.cs",
+              "DocumentMoniker": "D:\\Network\\Chat-console-via-TCP\\ServerApp.Tests\\OnlientClientPrint.cs",
+              "RelativeDocumentMoniker": "ServerApp.Tests\\OnlientClientPrint.cs",
+              "ToolTip": "D:\\Network\\Chat-console-via-TCP\\ServerApp.Tests\\OnlientClientPrint.cs",
+              "RelativeToolTip": "ServerApp.Tests\\OnlientClientPrint.cs",
+              "ViewState": "AgIAAD4AAAAAAAAAAAAuwEcAAAALAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-28T08:08:59.095Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "ClientConnectionTests.cs",
-              "DocumentMoniker": "D:\\Network\\Chat-console-via-TCP\\ServerApp.Tests\\ClientConnectionTests.cs",
-              "RelativeDocumentMoniker": "ServerApp.Tests\\ClientConnectionTests.cs",
-              "ToolTip": "D:\\Network\\Chat-console-via-TCP\\ServerApp.Tests\\ClientConnectionTests.cs",
-              "RelativeToolTip": "ServerApp.Tests\\ClientConnectionTests.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-28T06:38:14.976Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "Client.cs",
-              "DocumentMoniker": "D:\\Network\\Chat-console-via-TCP\\ClientApp\\Client.cs",
-              "RelativeDocumentMoniker": "ClientApp\\Client.cs",
-              "ToolTip": "D:\\Network\\Chat-console-via-TCP\\ClientApp\\Client.cs",
-              "RelativeToolTip": "ClientApp\\Client.cs",
-              "ViewState": "AgIAANsAAAAAAAAAAAAAAPEAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-27T15:44:17.425Z",
+              "WhenOpened": "2025-11-28T09:43:34.116Z",
               "EditorCaption": ""
             }
           ]
