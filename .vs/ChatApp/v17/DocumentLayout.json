@@ -3,6 +3,10 @@
   "WorkspaceRootPath": "D:\\Network\\Chat-console-via-TCP\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{24A8EB49-8A1C-4832-A397-F4CC1ACB2E1F}|ClientApp.Tests\\ClientApp.Tests.csproj|d:\\network\\chat-console-via-tcp\\clientapp.tests\\testforregisteruser.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{24A8EB49-8A1C-4832-A397-F4CC1ACB2E1F}|ClientApp.Tests\\ClientApp.Tests.csproj|solutionrelative:clientapp.tests\\testforregisteruser.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{24A8EB49-8A1C-4832-A397-F4CC1ACB2E1F}|ClientApp.Tests\\ClientApp.Tests.csproj|d:\\network\\chat-console-via-tcp\\clientapp.tests\\testusername_passwordwhenlogin.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{24A8EB49-8A1C-4832-A397-F4CC1ACB2E1F}|ClientApp.Tests\\ClientApp.Tests.csproj|solutionrelative:clientapp.tests\\testusername_passwordwhenlogin.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -22,7 +26,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 269,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Bookmark",
@@ -34,7 +38,20 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
+              "Title": "TestForRegisterUser.cs",
+              "DocumentMoniker": "D:\\Network\\Chat-console-via-TCP\\ClientApp.Tests\\TestForRegisterUser.cs",
+              "RelativeDocumentMoniker": "ClientApp.Tests\\TestForRegisterUser.cs",
+              "ToolTip": "D:\\Network\\Chat-console-via-TCP\\ClientApp.Tests\\TestForRegisterUser.cs",
+              "RelativeToolTip": "ClientApp.Tests\\TestForRegisterUser.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-27T17:34:37.394Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
               "Title": "ClientConnectionService.cs",
               "DocumentMoniker": "D:\\Network\\Chat-console-via-TCP\\ServerApp\\Services\\ClientConnectionService.cs",
               "RelativeDocumentMoniker": "ServerApp\\Services\\ClientConnectionService.cs",
@@ -42,12 +59,11 @@
               "RelativeToolTip": "ServerApp\\Services\\ClientConnectionService.cs",
               "ViewState": "AgIAAEkAAAAAAAAAAAAiwFYAAAA+AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-27T16:35:17.62Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-11-27T16:35:17.62Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "TestUsername_PasswordWhenLogin.cs",
               "DocumentMoniker": "D:\\Network\\Chat-console-via-TCP\\ClientApp.Tests\\TestUsername_PasswordWhenLogin.cs",
               "RelativeDocumentMoniker": "ClientApp.Tests\\TestUsername_PasswordWhenLogin.cs",
@@ -55,12 +71,11 @@
               "RelativeToolTip": "ClientApp.Tests\\TestUsername_PasswordWhenLogin.cs",
               "ViewState": "AgIAAA4AAAAAAAAAAAAhwBoAAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-27T16:28:54.227Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-11-27T16:28:54.227Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 3,
               "Title": "Client.cs",
               "DocumentMoniker": "D:\\Network\\Chat-console-via-TCP\\ClientApp\\Client.cs",
               "RelativeDocumentMoniker": "ClientApp\\Client.cs",
@@ -68,8 +83,7 @@
               "RelativeToolTip": "ClientApp\\Client.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAATAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-27T15:44:17.425Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-11-27T15:44:17.425Z"
             }
           ]
         }
