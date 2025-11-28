@@ -25,7 +25,7 @@ namespace ServerApp.Services
             string passHash = args[1];
             string display = args[2];
 
-            if (await _db.UsernameExistsAsync(username) || await _db.DisplayExistsAsync(display))
+            if (await _db.UsernameExistsAsync(username) && await _db.DisplayExistsAsync(display))
                 return AuthResult.Fail("[SERVER] Username and display name already exists.");
             else if (await _db.UsernameExistsAsync(username))
                 return AuthResult.Fail("[SERVER] Username already exists.");
