@@ -1,39 +1,35 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using Xunit;
 
-namespace ClientApp
+namespace ClientApp.Tests
 {
-    // =====================
-    // Hàm kiểm tra username
-    // =====================
-    public class UserValidator
+    // =======================
+    // Database mô phỏng
+    // =======================
+    public static class SimpleDb
     {
-        public static bool IsValidUsername(string username)
+        public static readonly Dictionary<string, string> Users = new()
         {
-            // Chỉ đúng "mavis" chính xác
-            return username == "mavis";
-        }
+            { "mavis", "123456" } // chỉ đúng "mavis"
+        };
     }
 
-    // =====================
-    // Server TCP giả lập (dành cho test)
-    // =====================
-    public class MockServer
+    // =======================
+    // Mock TCP server
+    // =======================
+    public class DebugMockServer
     {
         private TcpListener _listener;
-        private Thread _serverThread;
+        private Thread _thread;
         private bool _running;
-
         public int Port { get; }
 
-        public MockServer(int port = 5000)
-        {
-            Port = port;
-        }
+        public DebugMockServer(int port = 6000) => Port = port;
 
         public void Start()
         {
@@ -41,94 +37,115 @@ namespace ClientApp
             _listener = new TcpListener(IPAddress.Loopback, Port);
             _listener.Start();
 
-            _serverThread = new Thread(() =>
+            _thread = new Thread(() =>
             {
                 while (_running)
                 {
-                    if (_listener.Pending())
+                    try
                     {
-                        TcpClient client = _listener.AcceptTcpClient();
-                        NetworkStream stream = client.GetStream();
+                        if (!_listener.Pending())
+                        {
+                            Thread.Sleep(10);
+                            continue;
+                        }
 
-                        byte[] buffer = new byte[1024];
-                        int read = stream.Read(buffer, 0, buffer.Length);
-                        string username = Encoding.UTF8.GetString(buffer, 0, read);
+                        using TcpClient client = _listener.AcceptTcpClient();
+                        using NetworkStream stream = client.GetStream();
 
-                        // Gửi kết quả kiểm tra username
-                        string response = UserValidator.IsValidUsername(username) ? "True" : "False";
+                        byte[] buf = new byte[1024];
+                        int read = stream.Read(buf, 0, buf.Length);
+                        string raw = Encoding.UTF8.GetString(buf, 0, read).Trim();
+
+                        var parts = raw.Split('|');
+                        string usernameReceived = parts.Length > 0 ? parts[0] : "";
+                        string passwordReceived = parts.Length > 1 ? parts[1] : "";
+
+                        string response;
+
+                        // Kiểm tra username case-sensitive
+                        if (!SimpleDb.Users.ContainsKey(usernameReceived))
+                        {
+                            response = "[SERVER] Incorrect username";
+                        }
+                        else
+                        {
+                            string correctPassword = SimpleDb.Users[usernameReceived];
+                            response = correctPassword == passwordReceived
+                                ? "Login OK! Welcome to the chat room."
+                                : "[SERVER] Incorrect password";
+                        }
+
                         byte[] respBytes = Encoding.UTF8.GetBytes(response);
                         stream.Write(respBytes, 0, respBytes.Length);
-
-                        client.Close();
                     }
-                    Thread.Sleep(10);
+                    catch { /* ignore for simplicity */ }
                 }
             });
-            _serverThread.Start();
+
+            _thread.Start();
         }
 
         public void Stop()
         {
             _running = false;
-            _listener.Stop();
-            _serverThread.Join();
+            try { _listener.Stop(); } catch { }
+            _thread.Join();
         }
     }
 
-    // =====================
-    // Client helper (gửi username)
-    // =====================
-    public class ClientHelper
+    // =======================
+    // Client gửi username|password
+    // =======================
+    public static class DebugClient
     {
-        public static bool CheckUsername(string username, int port = 5000)
+        public static string SendLogin(string username, string password, int port = 6000)
         {
             using TcpClient client = new TcpClient("127.0.0.1", port);
-            NetworkStream stream = client.GetStream();
+            using NetworkStream stream = client.GetStream();
 
-            byte[] bytes = Encoding.UTF8.GetBytes(username);
-            stream.Write(bytes, 0, bytes.Length);
+            string msg = $"{username}|{password}\n";
+            byte[] outb = Encoding.UTF8.GetBytes(msg);
+            stream.Write(outb, 0, outb.Length);
 
-            byte[] buffer = new byte[1024];
-            int read = stream.Read(buffer, 0, buffer.Length);
-            string response = Encoding.UTF8.GetString(buffer, 0, read);
-
-            return response == "True";
+            byte[] buf = new byte[1024];
+            int read = stream.Read(buf, 0, buf.Length);
+            return Encoding.UTF8.GetString(buf, 0, read).Trim();
         }
     }
 
-    // =====================
-    // Test xUnit + Console log
-    // =====================
-    public class CheckUsernameLoginTests
+    // =======================
+    // xUnit test
+    // =======================
+    public class LoginTests
     {
-        private readonly int _port = 5000;
+        private readonly int _port = 6000;
 
         [Theory]
-        [InlineData("Mavis", false)]
-        [InlineData("mAvis", false)]
-        [InlineData("MAVIS", false)]
-        [InlineData("maviss", false)]
-        [InlineData("mavis", true)]
-        public void CheckUsernameLogin_OutputTrueFalse(string input, bool expected)
+        // username đúng + password đúng
+        [InlineData("mavis", "123456", "Login OK! Welcome to the chat room.")]
+        // username đúng + password sai
+        [InlineData("mavis", "wrongpass", "[SERVER] Incorrect password")]
+        // username sai
+        [InlineData("Mavis", "123456", "[SERVER] Incorrect username")]
+        [InlineData("mAvis", "123456", "[SERVER] Incorrect username")]
+        [InlineData("MAVIS", "123456", "[SERVER] Incorrect username")]
+        [InlineData("unknown", "123456", "[SERVER] Incorrect username")]
+        public void LoginTest_UsernamePassword(string username, string password, string expected)
         {
-            // Start server
-            MockServer server = new MockServer(_port);
+            var server = new DebugMockServer(_port);
             server.Start();
 
-            // Client gửi username
-            bool actual = ClientHelper.CheckUsername(input, _port);
+            string actual = DebugClient.SendLogin(username, password, _port);
 
             Console.WriteLine("=========================================");
-            Console.WriteLine($"Kiểm tra username: \"{input}\"");
-            Console.WriteLine($"Mong đợi       : {expected}");
-            Console.WriteLine($"Thực tế        : {actual}");
-            Console.WriteLine(actual == expected ? "KẾT QUẢ CHÍNH XÁC" : "KẾT QUẢ KHÔNG KHỚP — Test Fail");
+            Console.WriteLine($"Kiểm tra đăng nhập: username=\"{username}\", password=\"{password}\"");
+            Console.WriteLine($"Mong đợi đầu ra : {expected}");
+            Console.WriteLine($"Thực tế đầu ra  : {actual}");
+            Console.WriteLine(expected == actual ? "✔ KẾT QUẢ CHÍNH XÁC" : "❌ KHÔNG KHỚP — TEST FAIL");
             Console.WriteLine("=========================================");
 
-            // Assert để xUnit nhận kết quả
             Assert.Equal(expected, actual);
 
-            // Stop server
             server.Stop();
         }
     }
