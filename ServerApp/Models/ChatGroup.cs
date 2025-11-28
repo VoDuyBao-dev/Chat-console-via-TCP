@@ -10,6 +10,26 @@ namespace ServerApp.Models
         public DateTime CreatedAt { get; set; }
 
         // Danh sách thành viên hiện đang online trong nhóm (chỉ lưu trong RAM)
-        public ConcurrentBag<User> OnlineMembers { get; set; } = new();
+        public List<User> OnlineMembers { get; set; } = new();
+        private readonly object _onlineLock = new object();
+
+        public void AddMember(User user)
+        {
+            lock (_onlineLock)
+            {
+                if (!OnlineMembers.Any(u => u.UserId == user.UserId))
+                    OnlineMembers.Add(user);
+            }
+        }
+
+        public void RemoveMember(int userId)
+        {
+            lock (_onlineLock)
+            {
+                OnlineMembers.RemoveAll(u => u.UserId == userId);
+            }
+        }
+
+        public int OnlineCount => OnlineMembers.Count;
     }
 }

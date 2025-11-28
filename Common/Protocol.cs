@@ -17,6 +17,7 @@
        public const string CREATEGROUP = "CREATEGROUP";
        public const string INVITE     = "INVITE";
        public const string GROUPMSG   = "GROUPMSG";
+       public const string MYGROUPS   = "MYGROUPS";
 
         // SYSTEM
         public const string USERS = "USERS";

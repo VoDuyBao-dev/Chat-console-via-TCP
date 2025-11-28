@@ -201,10 +201,29 @@ namespace ServerApp.Services
             await _db.SaveGroupMessageAsync(groupId, sender.UserId, msg);
         }
 
+        // Liệt kê nhóm của user tương ứng
+        public async Task HandleMyGroupsAsync(User sender)
+        {
+            var myGroups = await _db.GetUserGroupsAsync(sender.UserId);
 
+            if (!myGroups.Any())
+            {
+                await sender.Writer.WriteLineAsync("[SERVER] You haven't joined any groups yet.");
+                return;
+            }
 
+            var sb = new StringBuilder("===== Your Groups =====\n");
+            foreach (var g in myGroups)
+            {
+                int onlineCount = _groups.TryGetValue(g.GroupId, out var cg) 
+                    ? cg.OnlineMembers.Count 
+                    : 0;
 
-        
+                sb.AppendLine($"{g.GroupName} ({onlineCount} online)");
+            }
+            sb.Append("==========================");
+            await sender.Writer.WriteLineAsync(sb.ToString());
+        }
 
         // USERS
         public async Task HandleUsersAsync(User sender)

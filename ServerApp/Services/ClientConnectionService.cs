@@ -49,7 +49,7 @@ namespace ServerApp.Services
                 };
             }
         }
-        
+
         public void HandleNewClient(TcpClient tcpClient)
         {
 
@@ -87,6 +87,16 @@ namespace ServerApp.Services
                     // Login/Register succeeded
                     await user.Writer.WriteLineAsync(result.SuccessToken);
                     break;
+                }
+
+                // THÊM USER VÀO DANH SÁCH ONLINE
+                var userGroups = await _db.GetUserGroupsAsync(user.UserId);
+                foreach (var g in userGroups)
+                {
+                    if (_groups.TryGetValue(g.GroupId, out var chatGroup))
+                    {
+                        chatGroup.AddMember(user); 
+                    }
                 }
 
 
@@ -157,6 +167,10 @@ namespace ServerApp.Services
                             await _commands.HandleGroupMessageAsync(user, gid, content);
                             break;
 
+                        // MY GROUPS
+                        case Protocol.MYGROUPS:
+                            await _commands.HandleMyGroupsAsync(user);
+                            break;
 
                         // USER LIST
                         case Protocol.USERS:
@@ -190,6 +204,11 @@ namespace ServerApp.Services
                 if (user.UserId != 0)
                     await _db.SetOfflineAsync(user.UserId);
 
+                // XÓA USER KHỎI TẤT CẢ NHÓM KHI LOGOUT 
+                foreach (var group in _groups.Values)
+                {
+                    group.RemoveMember(user.UserId);
+                }
                 ConsoleLogger.Info($"{user.DisplayName} ({endpoint}) has disconnected");
                 await BroadcastAsync($"[SERVER] {user.DisplayName} has left the room!");
                 await BroadcastUserListAsync();

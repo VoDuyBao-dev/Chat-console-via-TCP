@@ -360,6 +360,15 @@ namespace ClientApp
                     await _chat.SendMessageAsync(MessageBuilder.SendGroupMessage(groupId, message));
                     continue;
                 }
+                
+                // MY GROUPS - Hỗ trợ cả /mygroups và mygroups
+                if (input.Equals("/mygroups", StringComparison.OrdinalIgnoreCase) ||
+                    input.Equals("mygroups", StringComparison.OrdinalIgnoreCase))
+                {
+                    await _chat.SendMessageAsync(MessageBuilder.MyGroups());
+                    continue;
+                } 
+
 
 
             // UNKNOWN COMMAND

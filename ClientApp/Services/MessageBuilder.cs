@@ -48,6 +48,11 @@ namespace ClientApp.Services
             return $"{Protocol.GROUPMSG}{Protocol.Split}{groupId}{Protocol.Split}{message}";
         }
 
+        public static string MyGroups()
+        {
+            return Protocol.MYGROUPS;
+        }   
+
 
 
         public static string Help()

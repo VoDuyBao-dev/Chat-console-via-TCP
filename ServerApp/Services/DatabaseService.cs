@@ -292,6 +292,41 @@ namespace ServerApp.Services
             await cmd.ExecuteNonQueryAsync();
         }
 
+         /// Lấy danh sách nhóm mà user đang tham gia
+        public async Task<List<ChatGroup>> GetUserGroupsAsync(int userId)
+        {
+            var list = new List<ChatGroup>();
+
+            using var conn = GetConn();
+            await conn.OpenAsync();
+
+            string sql = @"
+                SELECT g.GroupId, g.GroupName, g.CreatorId, g.CreatedAt
+                FROM chat_groups g
+                INNER JOIN group_members gm ON g.GroupId = gm.GroupId
+                WHERE gm.UserId = @uid
+                ORDER BY g.CreatedAt DESC";
+
+            using var cmd = new MySqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@uid", userId);
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                list.Add(new ChatGroup
+                {
+                    GroupId = reader.GetInt32("GroupId"),
+                    GroupName = reader.GetString("GroupName"),
+                    CreatorId = reader.GetInt32("CreatorId"),
+                    CreatedAt = reader.GetDateTime("CreatedAt")
+                });
+            }
+
+            return list;
+        }
+
+        
+
 
 
 
