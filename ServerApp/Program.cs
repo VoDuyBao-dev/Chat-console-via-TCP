@@ -9,7 +9,12 @@ namespace ServerApp
             Console.Title = "TCP Chat Server";
 
             Server server = new Server();
-            server.Start(5000); 
+            server.Start();
+
+            Console.WriteLine("\n[SERVER] running! Press Enter to shutdown");
+            Console.ReadLine();
+
+            server.Stop();
 
             Console.ReadLine();
         }

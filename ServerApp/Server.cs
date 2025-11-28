@@ -3,68 +3,43 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using ServerApp.Config;
+using ServerApp.Models;
+using ServerApp.Services;
+using ServerApp.Utilities;
 
 namespace ServerApp
 {
     public class Server
     {
-        private TcpListener _listener;
+        private readonly TcpListenerService _tcpService;
+        private readonly UdpDiscoveryService _udpService;
 
-        // Bắt đầu server
-        public void Start(int port)
+        public Server()
         {
-            try
-            {
-                _listener = new TcpListener(IPAddress.Any, port);
-                _listener.Start();
-                Console.WriteLine($" Server started. Listening on port {port}...");
-                Console.WriteLine(" Waiting for client connections...\n");
+            var settings = AppSettings.Current;
+            var clientConnections = new ClientConnectionService();
 
-                // Vòng lặp chờ client kết nối
-                while (true)
-                {
-                    TcpClient client = _listener.AcceptTcpClient();
-                    Console.WriteLine($" Client connected from {client.Client.RemoteEndPoint}");
-
-                    // Tạo luồng riêng cho mỗi client
-                    Thread clientThread = new Thread(() => HandleClient(client));
-                    clientThread.Start();
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($" Error: {ex.Message}");
-            }
+            _tcpService = new TcpListenerService(settings.TcpPort, clientConnections.HandleNewClient);
+            _udpService = new UdpDiscoveryService(settings.TcpPort, settings.UdpPort);
         }
 
-        // Hàm xử lý client
-        private void HandleClient(TcpClient client)
+        public void Start()
         {
-            NetworkStream stream = client.GetStream();
-            byte[] buffer = new byte[1024];
-            int byteCount;
-
-            try
-            {
-                while ((byteCount = stream.Read(buffer, 0, buffer.Length)) > 0)
-                {
-                    string message = Encoding.UTF8.GetString(buffer, 0, byteCount);
-                    Console.WriteLine($" Message from {client.Client.RemoteEndPoint}: {message}");
-
-                    // Gửi phản hồi lại client (echo)
-                    string response = $"Server received: {message}";
-                    byte[] responseData = Encoding.UTF8.GetBytes(response);
-                    stream.Write(responseData, 0, responseData.Length);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($" Client {client.Client.RemoteEndPoint} disconnected: {ex.Message}");
-            }
-            finally
-            {
-                client.Close();
-            }
+            _udpService.Start();
+            _tcpService.Start();
+            ConsoleLogger.Success($"Server running on TCP {AppSettings.Current.TcpPort} | UDP Discovery {AppSettings.Current.UdpPort}");
+            ConsoleLogger.Info($"Server is sending broadcast");
         }
+
+        public void Stop()
+        {
+            _tcpService.Stop();
+            _udpService.Stop();
+            ConsoleLogger.Info("Server stopped.");
+        }
+
+
+
     }
 }
