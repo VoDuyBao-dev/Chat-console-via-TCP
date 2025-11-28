@@ -25,11 +25,13 @@ namespace ServerApp.Services
             string passHash = args[1];
             string display = args[2];
 
-            if (await _db.UsernameExistsAsync(username))
+            if (await _db.UsernameExistsAsync(username) || await _db.DisplayExistsAsync(display))
+                return AuthResult.Fail("[SERVER] Username and display name already exists.");
+            else if (await _db.UsernameExistsAsync(username))
                 return AuthResult.Fail("[SERVER] Username already exists.");
-
-            if (await _db.DisplayExistsAsync(display))
+            else if (await _db.DisplayExistsAsync(display))
                 return AuthResult.Fail("[SERVER] Display name already exists.");
+
 
             await _db.RegisterAsync(username, passHash, display);
 
