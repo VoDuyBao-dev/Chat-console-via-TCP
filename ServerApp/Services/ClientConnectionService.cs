@@ -114,6 +114,16 @@ namespace ServerApp.Services
                             await _commands.HandleCreateGroupAsync(user, msg.Args[0]);
                             break;
 
+                        // invite to group
+                        case Protocol.INVITE:
+                            if (msg.Args.Length < 2 || !int.TryParse(msg.Args[1], out int groupId))
+                            {
+                                await user.Writer.WriteLineAsync("[SERVER] Usage: INVITE|<Username>|<GroupID>");
+                                break;
+                            }
+                            await _commands.HandleInviteToGroupAsync(user, msg.Args[0], groupId);
+                            break;
+
                         // USER LIST
                         case Protocol.USERS:
                             await _commands.HandleUsersAsync(user);

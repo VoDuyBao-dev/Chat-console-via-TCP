@@ -186,6 +186,72 @@ namespace ServerApp.Services
             return Convert.ToInt32(result);
         }
 
+        /// Thêm người dùng vào nhóm
+        public async Task<bool> AddUserToGroupAsync(int groupId, int userId)
+        {
+            using var conn = GetConn();
+            await conn.OpenAsync();
+
+            // Tránh thêm trùng
+            string checkSql = @"SELECT COUNT(*) FROM group_members 
+                                WHERE GroupId = @gid AND UserId = @uid";
+            using (var checkCmd = new MySqlCommand(checkSql, conn))
+            {
+                checkCmd.Parameters.AddWithValue("@gid", groupId);
+                checkCmd.Parameters.AddWithValue("@uid", userId);
+                long count = (long)await checkCmd.ExecuteScalarAsync();
+                if (count > 0) return false; // đã trong nhóm rồi
+            }
+
+            string sql = @"INSERT INTO group_members (GroupId, UserId, Role) 
+                        VALUES (@gid, @uid, 'member')";
+
+            using var cmd = new MySqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@gid", groupId);
+            cmd.Parameters.AddWithValue("@uid", userId);
+
+            return await cmd.ExecuteNonQueryAsync() > 0;
+        }
+
+        /// Kiểm tra user có phải admin/creator của nhóm không. mặc định creator là admin luôn 
+        public async Task<bool> IsGroupAdminAsync(int groupId, int userId)
+        {
+            using var conn = GetConn();
+            await conn.OpenAsync();
+
+            string sql = @"SELECT CreatorId FROM chat_groups WHERE GroupId = @gid";
+            using var cmd = new MySqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@gid", groupId);
+
+            var creatorId = await cmd.ExecuteScalarAsync();
+            if (creatorId == null) return false;
+
+            return Convert.ToInt32(creatorId) == userId;
+        }
+
+// Kiểm tra user có trong nhóm không
+        public async Task<bool> IsUserInGroupAsync(int groupId, int userId)
+        {
+            using var conn = GetConn();
+            await conn.OpenAsync();
+
+            const string sql = @"
+                SELECT 1 
+                FROM group_members 
+                WHERE GroupId = @gid AND UserId = @uid 
+                LIMIT 1";
+
+            using var cmd = new MySqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@gid", groupId);
+            cmd.Parameters.AddWithValue("@uid", userId);
+
+            var result = await cmd.ExecuteScalarAsync();
+            return result != null;
+        }
+
+
+
+
        
         
 

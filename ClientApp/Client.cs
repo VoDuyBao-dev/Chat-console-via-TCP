@@ -276,13 +276,57 @@ namespace ClientApp
                     continue;
                 }
 
-                // UNKNOWN COMMAND
-                ConsoleLogger.Error($"Unknown command: {input}. Type /help for commands.");
-            }
+                // INVITE TO GROUP - Hỗ trợ cả /invite và invite
+                if (input.StartsWith("/invite", StringComparison.OrdinalIgnoreCase) ||
+                    input.StartsWith("invite", StringComparison.OrdinalIgnoreCase))
+                {   
+                
+                    string prefix = input.StartsWith("/invite", StringComparison.OrdinalIgnoreCase) ? "/invite" : "invite";
+
+                    string rest = input.Substring(prefix.Length).TrimStart();
+
+                    if (string.IsNullOrWhiteSpace(rest))
+                    {
+                        ConsoleLogger.Error("Usage: /invite <username> <group ID>");
+                        ConsoleLogger.Info("Example: /invite Nam 5  or  invite Nam 5");
+                        continue;
+                    }
+
+                    // Split username and groupId by the first space
+                    int spaceIndex = rest.IndexOf(' ');
+                    if (spaceIndex <= 0)
+                    {
+                        ConsoleLogger.Error("Missing GroupID! Usage: /invite <username> <ID>");
+                        continue;
+                    }
+
+                    string username = rest.Substring(0, spaceIndex).Trim();
+                    string idStr = rest.Substring(spaceIndex + 1).Trim();
+
+                    if (string.IsNullOrWhiteSpace(username))
+                    {
+                        ConsoleLogger.Error("Username cannot be empty!");
+                        continue;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(idStr) || !int.TryParse(idStr, out int groupId) || groupId <= 0)
+                    {
+                        ConsoleLogger.Error("GroupID must be a positive integer! Example: 5");
+                        continue;
+                    }
+
+                    await _chat.SendMessageAsync(MessageBuilder.InviteToGroup(username, groupId));
+                    continue;
+                }
+
+            // UNKNOWN COMMAND
+            ConsoleLogger.Error($"Unknown command: {input}. Type /help for commands.");
+
 
 
 
             _chat.Disconnect();
         }
+    }
     }
 }

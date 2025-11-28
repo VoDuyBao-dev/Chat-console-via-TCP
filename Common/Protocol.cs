@@ -15,6 +15,7 @@
        
        // GROUP CHAT
        public const string CREATEGROUP = "CREATEGROUP";
+       public const string INVITE     = "INVITE";
 
         // SYSTEM
         public const string USERS = "USERS";

@@ -97,8 +97,60 @@ namespace ServerApp.Services
             group.OnlineMembers.Add(sender);
             _groups[groupId] = group;
 
-            await sender.Writer.WriteLineAsync($"[SERVER] Group created successfully '{groupName}'");
+            await sender.Writer.WriteLineAsync(
+            $"[SERVER] Group created successfully! Name: '{groupName}' | ID: {groupId} (Use this ID to invite/send messages)");
         }
+
+        // Mời người vào nhóm 
+        public async Task HandleInviteToGroupAsync(User sender, string targetName, int groupId)
+        {
+            if (!_groups.TryGetValue(groupId, out var group))
+            {
+                await sender.Writer.WriteLineAsync("[SERVER] Group not existed.");
+                return;
+            }
+
+            var target = _clients.Values.FirstOrDefault(u => 
+                string.Equals(u.DisplayName, targetName, StringComparison.OrdinalIgnoreCase));
+
+            if (target == null)
+            {
+                await sender.Writer.WriteLineAsync($"[SERVER] User not found '{targetName}'.");
+                return;
+            }
+
+            // Kiểm tra quyền (chỉ admin hoặc creator mới được mời)
+            bool isAdmin = group.CreatorId == sender.UserId || 
+                        await _db.IsGroupAdminAsync(groupId, sender.UserId);
+
+            if (!isAdmin)
+            {
+                await sender.Writer.WriteLineAsync("[SERVER] You don't have permission to invite members.");
+                return;
+            }
+
+            // Thêm vào DB
+            bool added = await _db.AddUserToGroupAsync(groupId, target.UserId);
+            if (!added)
+            {
+                await sender.Writer.WriteLineAsync("[SERVER] Cannot add member (they may already be in the group).");
+                return;
+            }
+
+            // Nếu user đang online → thêm vào danh sách RAM
+            if (group.OnlineMembers.All(m => m.UserId != target.UserId))
+            {
+                group.OnlineMembers.Add(target);
+            }
+
+            await sender.Writer.WriteLineAsync(
+                $"[SERVER] {target.DisplayName} has been invited to the group '{group.GroupName}' (ID: {groupId})");
+
+            await target.Writer.WriteLineAsync(
+                $"[GROUP] You have been invited to the group '{group.GroupName}' (ID: {groupId})");
+
+        }
+
 
         
 
@@ -118,14 +170,7 @@ namespace ServerApp.Services
         // HELP
         public async Task HandleHelpAsync(User sender)
         {
-            // var help = """
-            //     ===== Chat Commands =====
-            //     msg|text                 - Send a public message
-            //     /pm|<user>|<msg>         - Send a private message
-            //     /users                   - Show list of online users
-            //     /help                    - Show this help menu
-            //     exit                     - Leave the chat room
-            //     """;
+    
             var help = """
         ===== Chat Commands =====
         msg|text                 - Send a public message
