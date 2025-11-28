@@ -24,7 +24,7 @@ namespace ServerApp.Services
         // PUBLIC MESSAGE
         public async Task HandlePublicAsync(User sender, string msg)
         {
-            await _broadcast($"[{sender.Username}]: {msg}", sender);
+            await _broadcast($"[{sender.DisplayName}]: {msg}", sender);
         }
 
         // PRIVATE MESSAGE
@@ -33,25 +33,29 @@ namespace ServerApp.Services
             // Validate: empty message or empty target
             if (string.IsNullOrWhiteSpace(targetName) || string.IsNullOrWhiteSpace(msg))
             {
-                await sender.Writer.WriteLineAsync("[SERVER] Usage: PM|<username>|<message>");
+                await sender.Writer.WriteLineAsync("[SERVER] Usage: PM|<DisplayName>|<message>");
                 return;
             }
 
             // Prevent sending PM to yourself
-            if (string.Equals(sender.Username, targetName, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(sender.DisplayName, targetName, StringComparison.OrdinalIgnoreCase))
             {
                 await sender.Writer.WriteLineAsync("[SERVER] You cannot send a private message to yourself.");
                 return;
             }
 
-            // Check if target exists
-            if (_clients.TryGetValue(targetName, out User? target))
+            // Find target by DisplayName
+            User? target = _clients.Values
+                .FirstOrDefault(u => string.Equals(u.DisplayName, targetName, StringComparison.OrdinalIgnoreCase));
+
+
+            if (target != null)
             {
                 // Send private message to the target
-                await target.Writer.WriteLineAsync($"[PRIVATE from {sender.Username}]: {msg}");
+                await target.Writer.WriteLineAsync($"[PRIVATE from {sender.DisplayName}]: {msg}");
 
                 // Confirm to the sender
-                await sender.Writer.WriteLineAsync($"[PRIVATE to {targetName}]: {msg}");
+                await sender.Writer.WriteLineAsync($"[PRIVATE to {target.DisplayName}]: {msg}");
 
                 // Save to database if both are real users (not Guest)
                 if (sender.UserId != 0 && target.UserId != 0)
@@ -84,11 +88,11 @@ namespace ServerApp.Services
         {
             var help = """
                 ===== Chat Commands =====
-                msg|text                - Send a public message
+                msg|text                 - Send a public message
                 /pm|<user>|<msg>         - Send a private message
                 /users                   - Show list of online users
                 /help                    - Show this help menu
-                exit                    - Leave the chat room
+                exit                     - Leave the chat room
                 """;
             await sender.Writer.WriteLineAsync(help);
         }
