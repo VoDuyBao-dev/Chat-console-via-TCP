@@ -16,16 +16,16 @@ namespace ServerApp.Utilities
             return host.AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
         }
 
-        public static void PrintLocalIPs(int port)
-        {
-            Console.WriteLine("\nIP to connect from another device in the LAN:");
-            foreach (var ip in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
-            {
-                if (ip.AddressFamily == AddressFamily.InterNetwork)
-                    Console.WriteLine($" → {ip}:{port}");
-            }
-            Console.WriteLine();
-        }
+        // public static void PrintLocalIPs(int port)
+        // {
+        //     Console.WriteLine("\nIP to connect from another device in the LAN:");
+        //     foreach (var ip in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
+        //     {
+        //         if (ip.AddressFamily == AddressFamily.InterNetwork)
+        //             Console.WriteLine($" → {ip}:{port}");
+        //     }
+        //     Console.WriteLine();
+        // }
 
         public static async Task<string?> SafeReadLineAsync(NetworkStream stream)
         {
