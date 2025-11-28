@@ -211,9 +211,21 @@ namespace ClientApp
                 }
 
                 // PUBLIC MESSAGE
-                if (!input.StartsWith("/"))
+                if (input.StartsWith("msg ", StringComparison.OrdinalIgnoreCase) ||
+                    input.StartsWith("/msg ", StringComparison.OrdinalIgnoreCase))
                 {
-                    await _chat.SendMessageAsync($"MSG|{input}");
+                    // BỎ prefix: "/msg " = 5 ký tự, "msg " = 4 ký tự
+                    string content = input.StartsWith("/msg ", StringComparison.OrdinalIgnoreCase)
+                        ? input[5..].Trim()
+                        : input[4..].Trim();
+
+                    if (string.IsNullOrWhiteSpace(content))
+                    {
+                        ConsoleLogger.Error("Usage: msg <message>");
+                        continue;
+                    }
+
+                    await _chat.SendMessageAsync($"MSG|{content}");
                     continue;
                 }
 
