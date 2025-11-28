@@ -1,7 +1,6 @@
 using System;
 using System.Threading.Tasks;
 using ClientApp.Utilities;
-using ClientApp.Services;
 using Common;
 
 namespace ClientApp.Services
@@ -15,43 +14,52 @@ namespace ClientApp.Services
             _chat = chat;
         }
 
-        public async Task HandleLoginAsync()
+        public async Task HandleLoginAsync(bool maskPassword = false)
         {
-            string u, p;
+            string username, password;
 
+            // USERNAME
             while (true)
             {
                 Console.Write("Username: ");
-                u = Console.ReadLine()!.Trim();
+                username = Console.ReadLine()!.Trim();
 
-                if (InputValidator.IsInvalid(u))
+                if (InputValidator.IsInvalid(username))
                 {
-                    ConsoleLogger.Error("Username không được bỏ trống.");
+                    ConsoleLogger.Error("Username cannot be empty.");
                     continue;
                 }
-                if (InputValidator.ContainsIllegalChars(u))
+
+                if (InputValidator.ContainsIllegalChars(username))
                 {
-                    ConsoleLogger.Error("Username chứa ký tự không hợp lệ.");
+                    ConsoleLogger.Error("Username contains illegal characters.");
                     continue;
                 }
+
                 break;
             }
 
+            // PASSWORD
             while (true)
             {
                 Console.Write("Password: ");
-                p = Console.ReadLine()!;
 
-                if (InputValidator.IsInvalid(p))
+                if (maskPassword)
+                    password = InputValidator.ReadPassword();
+                else
+                    password = Console.ReadLine()!;
+
+                if (InputValidator.IsInvalid(password))
                 {
-                    ConsoleLogger.Error("Password không được bỏ trống.");
+                    ConsoleLogger.Error("Password cannot be empty.");
                     continue;
                 }
                 break;
             }
 
-            string passHash = Utils.PasswordHasher.SHA256Hash(p);
-            await _chat.SendMessageAsync($"LOGIN|{u}|{passHash}");
+            string passHash = Utils.PasswordHasher.SHA256Hash(password);
+
+            await _chat.SendMessageAsync($"LOGIN|{username}|{passHash}");
         }
     }
 }
