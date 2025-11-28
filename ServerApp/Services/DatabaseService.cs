@@ -1,4 +1,6 @@
 using MySql.Data.MySqlClient;
+using ServerApp.Models;
+using System.Data;
 using System.Threading.Tasks;
 
 namespace ServerApp.Services
@@ -154,5 +156,39 @@ namespace ServerApp.Services
 
             return null;
         }
+
+        // chat group
+        /// Tạo nhóm chat mới, trả về GroupId
+        public async Task<int> CreateGroupAsync(int creatorId, string groupName)
+        {
+            using var conn = GetConn();
+            await conn.OpenAsync();
+
+            // Kiểm tra tên nhóm đã tồn tại chưa
+            string checkSql = "SELECT COUNT(*) FROM chat_groups WHERE GroupName = @name";
+            using (var checkCmd = new MySqlCommand(checkSql, conn))
+            {
+                checkCmd.Parameters.AddWithValue("@name", groupName);
+                long exists = (long)await checkCmd.ExecuteScalarAsync();
+                if (exists > 0)
+                    return -1; // tên nhóm đã tồn tại
+            }
+
+            string sql = @"INSERT INTO chat_groups (GroupName, CreatorId) 
+                        VALUES (@name, @creator);
+                        SELECT LAST_INSERT_ID();";
+
+            using var cmd = new MySqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@name", groupName);
+            cmd.Parameters.AddWithValue("@creator", creatorId);
+
+            var result = await cmd.ExecuteScalarAsync();
+            return Convert.ToInt32(result);
+        }
+
+       
+        
+
+
     }
 }

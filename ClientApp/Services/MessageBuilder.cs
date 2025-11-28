@@ -29,6 +29,12 @@ namespace ClientApp.Services
             return $"{Protocol.PM}{Protocol.Split}{target}{Protocol.Split}{msg}";
         }
 
+        // chat group
+        public static string CreateGroup(string groupName)
+        {
+            return $"{Protocol.CREATEGROUP}{Protocol.Split}{groupName}";
+        }
+
         public static string Help()
         {
             return Protocol.HELP;

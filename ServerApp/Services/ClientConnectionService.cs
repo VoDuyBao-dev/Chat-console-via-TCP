@@ -84,6 +84,7 @@ namespace ServerApp.Services
                     if (raw == null) break;
 
                     var msg = MessageParser.Parse(raw);
+                    ConsoleLogger.Info($"[INFO] msg.command: {msg.Command}");
 
                     switch (msg.Command)
                     {
@@ -100,6 +101,17 @@ namespace ServerApp.Services
                                 break;
                             }
                             await _commands.HandlePrivateMessageAsync(user, msg.Args[0], msg.Args[1]);
+                            break;
+
+                        //  GROUP CHAT 
+                        //  Create group
+                        case Protocol.CREATEGROUP:
+                            if (msg.Args.Length == 0)
+                            {
+                                await user.Writer.WriteLineAsync("[SERVER] Usage: CREATEGROUP|<Tên nhóm>");
+                                break;
+                            }
+                            await _commands.HandleCreateGroupAsync(user, msg.Args[0]);
                             break;
 
                         // USER LIST

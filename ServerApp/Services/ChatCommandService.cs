@@ -8,6 +8,7 @@ namespace ServerApp.Services
     public class ChatCommandService
     {
         private readonly ConcurrentDictionary<string, User> _clients;
+        private readonly ConcurrentDictionary<int, ChatGroup> _groups = new();
         private readonly DatabaseService _db;
         private readonly Func<string, User?, Task> _broadcast;
 
@@ -69,6 +70,37 @@ namespace ServerApp.Services
             }
         }
 
+        // Chat group
+        // Tạo nhóm
+        public async Task HandleCreateGroupAsync(User sender, string groupName)
+        {
+            if (string.IsNullOrWhiteSpace(groupName) || groupName.Length > 50)
+            {
+                await sender.Writer.WriteLineAsync("[SERVER] Group name invalid (1-50 character).");
+                return;
+            }
+
+            // Lưu vào db
+            int groupId = await _db.CreateGroupAsync(sender.UserId, groupName);
+            if (groupId <= 0)
+            {
+                await sender.Writer.WriteLineAsync("[SERVER] Unable to create group. Please try again!");
+                return;
+            }
+
+            var group = new ChatGroup
+            {
+                GroupId = groupId,
+                GroupName = groupName,
+                CreatorId = sender.UserId
+            };
+            group.OnlineMembers.Add(sender);
+            _groups[groupId] = group;
+
+            await sender.Writer.WriteLineAsync($"[SERVER] Group created successfully '{groupName}'");
+        }
+
+        
 
         // USERS
         public async Task HandleUsersAsync(User sender)
@@ -86,14 +118,31 @@ namespace ServerApp.Services
         // HELP
         public async Task HandleHelpAsync(User sender)
         {
+            // var help = """
+            //     ===== Chat Commands =====
+            //     msg|text                 - Send a public message
+            //     /pm|<user>|<msg>         - Send a private message
+            //     /users                   - Show list of online users
+            //     /help                    - Show this help menu
+            //     exit                     - Leave the chat room
+            //     """;
             var help = """
-                ===== Chat Commands =====
-                msg|text                 - Send a public message
-                /pm|<user>|<msg>         - Send a private message
-                /users                   - Show list of online users
-                /help                    - Show this help menu
-                exit                     - Leave the chat room
-                """;
+        ===== Chat Commands =====
+        msg|text                 - Send a public message
+        /pm|<user>|<msg>         - Send a private message
+        /users                   - Show list of online users
+        /mygroups                - Show the groups you are in
+
+        ---- Group Chat ----
+        /creategroup|<group name> - Create a new group (you become admin)
+        /invite|<user>|<group ID> - Invite a user to the group (admin only)
+        /g|<group ID>|<msg>       - Send a message to a group (e.g., /g|5|Hello everyone)
+        /mygroups                  - Show your groups + number of online members
+
+        /help                     - Show this help menu
+        exit                      - Leave the chat room
+        ==========================
+        """;
             await sender.Writer.WriteLineAsync(help);
         }
     }

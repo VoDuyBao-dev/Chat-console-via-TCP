@@ -12,12 +12,15 @@
         // CHAT
         public const string MSG = "MSG";
         public const string PM = "PM";
-        public const string EXIT = "EXIT";
+       
+       // GROUP CHAT
+       public const string CREATEGROUP = "CREATEGROUP";
 
         // SYSTEM
         public const string USERS = "USERS";
         public const string HELP = "HELP";
         public const string PING = "PING";
+        public const string EXIT = "EXIT";
 
         // SERVER RESPONSES
         public const string REGISTER_SUCCESS = "REGISTER_SUCCESS";

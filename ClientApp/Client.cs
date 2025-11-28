@@ -244,6 +244,38 @@ namespace ClientApp
                     continue;
                 }
 
+                // CREATE GROUP
+                if (input.StartsWith("creategroup", StringComparison.OrdinalIgnoreCase) ||
+                    input.StartsWith("/creategroup", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Lấy phần sau "/creategroup" và loại bỏ khoảng trắng thừa
+                    string groupName = input.Length > "/creategroup".Length 
+                    ? input.Substring("/creategroup".Length).Trim()
+                    : "";
+
+                    if (string.IsNullOrWhiteSpace(groupName))
+                    {
+                        ConsoleLogger.Error("Usage: creategroup <Group name>");
+                        ConsoleLogger.Info("Ex: creategroup Group ABC");
+                        continue;
+                    }
+
+                    if (groupName.Length > 50)
+                    {
+                        ConsoleLogger.Error("The group name cannot exceed 50 characters!");
+                        continue;
+                    }
+
+                    if (groupName.Contains('|'))
+                    {
+                        ConsoleLogger.Error("The group name cannot contain the character '|'");
+                        continue;
+                    }
+
+                    await _chat.SendMessageAsync(MessageBuilder.CreateGroup(groupName));
+                    continue;
+                }
+
                 // UNKNOWN COMMAND
                 ConsoleLogger.Error($"Unknown command: {input}. Type /help for commands.");
             }
