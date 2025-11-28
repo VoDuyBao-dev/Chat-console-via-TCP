@@ -8,16 +8,18 @@ namespace ServerApp.Services
     public class ChatCommandService
     {
         private readonly ConcurrentDictionary<string, User> _clients;
-        private readonly ConcurrentDictionary<int, ChatGroup> _groups = new();
+        private readonly ConcurrentDictionary<int, ChatGroup> _groups;
         private readonly DatabaseService _db;
         private readonly Func<string, User?, Task> _broadcast;
 
         public ChatCommandService(
             ConcurrentDictionary<string, User> clients,
+            ConcurrentDictionary<int, ChatGroup> groups,
             DatabaseService db,
             Func<string, User?, Task> broadcast)
         {
             _clients = clients;
+            _groups = groups;
             _db = db;
             _broadcast = broadcast;
         }
@@ -84,72 +86,122 @@ namespace ServerApp.Services
             int groupId = await _db.CreateGroupAsync(sender.UserId, groupName);
             if (groupId <= 0)
             {
-                await sender.Writer.WriteLineAsync("[SERVER] Unable to create group. Please try again!");
+                await sender.Writer.WriteLineAsync("[SERVER] Unable to create group or group name existed. Please try again!");
                 return;
             }
+
+            // Thêm user vừa tạo nhóm vào thành viên của nhóm đó
+            await _db.AddUserToGroupAsync(groupId, sender.UserId, "admin"); // creator là admin
 
             var group = new ChatGroup
             {
                 GroupId = groupId,
                 GroupName = groupName,
-                CreatorId = sender.UserId
+                CreatorId = sender.UserId,
+                OnlineMembers = new() { sender }
             };
-            group.OnlineMembers.Add(sender);
+           
             _groups[groupId] = group;
 
             await sender.Writer.WriteLineAsync(
             $"[SERVER] Group created successfully! Name: '{groupName}' | ID: {groupId} (Use this ID to invite/send messages)");
         }
 
-        // Mời người vào nhóm 
+        // Mời người vào nhóm  chỉ admin mới được mời
         public async Task HandleInviteToGroupAsync(User sender, string targetName, int groupId)
         {
+            // 1. Check if group exists in memory
             if (!_groups.TryGetValue(groupId, out var group))
             {
-                await sender.Writer.WriteLineAsync("[SERVER] Group not existed.");
+                await sender.Writer.WriteLineAsync($"[SERVER] Group with ID {groupId} does not exist or server just restarted.");
                 return;
             }
 
-            var target = _clients.Values.FirstOrDefault(u => 
+            // 2. Find target user (online only)
+            var target = _clients.Values.FirstOrDefault(u =>
                 string.Equals(u.DisplayName, targetName, StringComparison.OrdinalIgnoreCase));
 
             if (target == null)
             {
-                await sender.Writer.WriteLineAsync($"[SERVER] User not found '{targetName}'.");
+                await sender.Writer.WriteLineAsync($"[SERVER] User '{targetName}' not found or currently offline.");
                 return;
             }
 
-            // Kiểm tra quyền (chỉ admin hoặc creator mới được mời)
-            bool isAdmin = group.CreatorId == sender.UserId || 
-                        await _db.IsGroupAdminAsync(groupId, sender.UserId);
-
-            if (!isAdmin)
+            if (target.UserId == sender.UserId)
             {
-                await sender.Writer.WriteLineAsync("[SERVER] You don't have permission to invite members.");
+                await sender.Writer.WriteLineAsync("[SERVER] You cannot invite yourself to the group.");
                 return;
             }
 
-            // Thêm vào DB
-            bool added = await _db.AddUserToGroupAsync(groupId, target.UserId);
-            if (!added)
+            // 3. Permission check: only admins can invite
+            if (!await _db.IsGroupAdminAsync(groupId, sender.UserId))
             {
-                await sender.Writer.WriteLineAsync("[SERVER] Cannot add member (they may already be in the group).");
+                await sender.Writer.WriteLineAsync("[SERVER] Only group admins can invite new members.");
                 return;
             }
 
-            // Nếu user đang online → thêm vào danh sách RAM
-            if (group.OnlineMembers.All(m => m.UserId != target.UserId))
+            // 4. Add user to group in database (default role = member)
+            if (!await _db.AddUserToGroupAsync(groupId, target.UserId, role: "member"))
+            {
+                await sender.Writer.WriteLineAsync($"[SERVER] {target.DisplayName} is already in the group.");
+                return;
+            }
+
+            // 5. Add to online members list if not already present
+            if (!group.OnlineMembers.Any(m => m.UserId == target.UserId))
             {
                 group.OnlineMembers.Add(target);
             }
 
+            // 6. Send confirmation messages
+            string groupInfo = $"'{group.GroupName}' (ID: {groupId})";
+
             await sender.Writer.WriteLineAsync(
-                $"[SERVER] {target.DisplayName} has been invited to the group '{group.GroupName}' (ID: {groupId})");
+                $"[SERVER] Successfully invited {target.DisplayName} to group {groupInfo}");
 
             await target.Writer.WriteLineAsync(
-                $"[GROUP] You have been invited to the group '{group.GroupName}' (ID: {groupId})");
-
+                $"[GROUP] You have been invited to group {groupInfo}\n" +
+                $"       Type '/g {groupId} <message>' to chat in this group!");
         }
+         // === Gửi tin nhắn nhóm ===
+        public async Task HandleGroupMessageAsync(User sender, int groupId, string msg)
+        {
+            
+
+            if (!_groups.TryGetValue(groupId, out var group))
+            {
+                await sender.Writer.WriteLineAsync("[SERVER] The group doesn't exist.");
+                return;
+            }
+
+            // Kiểm tra sender có trong nhóm không
+           
+            bool isMember = await _db.IsUserInGroupAsync(groupId, sender.UserId);
+            if (!isMember)
+            {
+                await sender.Writer.WriteLineAsync("[SERVER] You are not a member of this group.");
+                return;
+            }
+
+            //Cập nhật OnlineMembers nếu chưa có (đề phòng restart server)
+            if (group.OnlineMembers.All(u => u.UserId != sender.UserId))
+            {
+                group.OnlineMembers.Add(sender);
+            }
+
+            string message = $"[GROUP {group.GroupName}] {sender.DisplayName}: {msg}";
+
+            // Gửi cho tất cả thành viên online trong nhóm
+            var tasks = group.OnlineMembers.Select(member =>
+                member.Writer.WriteLineAsync(message));
+
+            await Task.WhenAll(tasks);
+
+            // Lưu vào lịch sử chat nhóm vào db
+            await _db.SaveGroupMessageAsync(groupId, sender.UserId, msg);
+        }
+
+
 
 
         

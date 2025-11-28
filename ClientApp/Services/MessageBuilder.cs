@@ -35,11 +35,19 @@ namespace ClientApp.Services
         {
             return $"{Protocol.CREATEGROUP}{Protocol.Split}{groupName}";
         }
+
         // invite to group
         public static string InviteToGroup(string username, int groupId)
         {
             return $"{Protocol.INVITE}{Protocol.Split}{username}{Protocol.Split}{groupId}";
         }
+
+// group message
+        public static string SendGroupMessage(int groupId, string message)
+        {
+            return $"{Protocol.GROUPMSG}{Protocol.Split}{groupId}{Protocol.Split}{message}";
+        }
+
 
 
         public static string Help()

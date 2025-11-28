@@ -158,6 +158,26 @@ namespace ServerApp.Services
         }
 
         // chat group
+        // Lấy tất cả nhóm (dùng khi khởi động server)
+        public async Task<List<ChatGroup>> GetAllGroupsAsync()
+        {
+            var list = new List<ChatGroup>();
+            using var conn = new MySqlConnection(_connStr);
+            await conn.OpenAsync();
+
+            using var cmd = new MySqlCommand("SELECT GroupId, GroupName, CreatorId FROM chat_groups", conn);
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                list.Add(new ChatGroup
+                {
+                    GroupId = reader.GetInt32("GroupId"),
+                    GroupName = reader.GetString("GroupName"),
+                    CreatorId = reader.GetInt32("CreatorId")
+                });
+            }
+            return list;
+        }
         /// Tạo nhóm chat mới, trả về GroupId
         public async Task<int> CreateGroupAsync(int creatorId, string groupName)
         {
@@ -187,7 +207,7 @@ namespace ServerApp.Services
         }
 
         /// Thêm người dùng vào nhóm
-        public async Task<bool> AddUserToGroupAsync(int groupId, int userId)
+        public async Task<bool> AddUserToGroupAsync(int groupId, int userId, string role = "member")
         {
             using var conn = GetConn();
             await conn.OpenAsync();
@@ -204,11 +224,12 @@ namespace ServerApp.Services
             }
 
             string sql = @"INSERT INTO group_members (GroupId, UserId, Role) 
-                        VALUES (@gid, @uid, 'member')";
+                   VALUES (@gid, @uid, @role)";
 
             using var cmd = new MySqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@gid", groupId);
             cmd.Parameters.AddWithValue("@uid", userId);
+            cmd.Parameters.AddWithValue("@role", role);
 
             return await cmd.ExecuteNonQueryAsync() > 0;
         }
@@ -219,16 +240,21 @@ namespace ServerApp.Services
             using var conn = GetConn();
             await conn.OpenAsync();
 
-            string sql = @"SELECT CreatorId FROM chat_groups WHERE GroupId = @gid";
+            const string sql = @"
+                SELECT 1 
+                FROM group_members 
+                WHERE GroupId = @gid 
+                AND UserId = @uid 
+                AND Role = 'admin' 
+                LIMIT 1";
+
             using var cmd = new MySqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@gid", groupId);
+            cmd.Parameters.AddWithValue("@uid", userId);
 
-            var creatorId = await cmd.ExecuteScalarAsync();
-            if (creatorId == null) return false;
-
-            return Convert.ToInt32(creatorId) == userId;
+            var result = await cmd.ExecuteScalarAsync();
+            return result != null;
         }
-
 // Kiểm tra user có trong nhóm không
         public async Task<bool> IsUserInGroupAsync(int groupId, int userId)
         {
@@ -248,6 +274,24 @@ namespace ServerApp.Services
             var result = await cmd.ExecuteScalarAsync();
             return result != null;
         }
+
+        /// Lưu tin nhắn nhóm vào bảng group_messages
+        public async Task SaveGroupMessageAsync(int groupId, int senderId, string content)
+        {
+            using var conn = GetConn();
+            await conn.OpenAsync();
+
+            string sql = @"INSERT INTO group_messages (GroupId, SenderId, Content)
+                        VALUES (@gid, @sid, @c)";
+
+            using var cmd = new MySqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@gid", groupId);
+            cmd.Parameters.AddWithValue("@sid", senderId);
+            cmd.Parameters.AddWithValue("@c", content);
+
+            await cmd.ExecuteNonQueryAsync();
+        }
+
 
 
 

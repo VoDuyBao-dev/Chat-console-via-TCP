@@ -11,6 +11,7 @@ namespace ServerApp.Services
     public class ClientConnectionService
     {
         private readonly ConcurrentDictionary<string, User> _clients = new();
+        private readonly ConcurrentDictionary<int, ChatGroup> _groups = new();
         private readonly DatabaseService _db;
 
         private readonly AuthService _auth;
@@ -25,9 +26,30 @@ namespace ServerApp.Services
 
             _commands = new ChatCommandService(
                 _clients,
+                _groups,
                 _db,
                 (msg, exclude) => BroadcastAsync(msg, exclude));
+
+            // TẢI TẤT CẢ NHÓM KHI KHỞI ĐỘNG SERVER
+            LoadGroupsFromDatabaseAsync().GetAwaiter().GetResult();
+            ConsoleLogger.Success($"[SERVER] Đã tải {_groups.Count} nhóm từ database.");
         }
+
+        private async Task LoadGroupsFromDatabaseAsync()
+        {
+            var groupsFromDb = await _db.GetAllGroupsAsync();
+            foreach (var g in groupsFromDb)
+            {
+                _groups[g.GroupId] = new ChatGroup
+                {
+                    GroupId = g.GroupId,
+                    GroupName = g.GroupName,
+                    CreatorId = g.CreatorId,
+                    OnlineMembers = new() // sẽ tự thêm khi user login
+                };
+            }
+        }
+        
         public void HandleNewClient(TcpClient tcpClient)
         {
 
@@ -84,7 +106,7 @@ namespace ServerApp.Services
                     if (raw == null) break;
 
                     var msg = MessageParser.Parse(raw);
-                    ConsoleLogger.Info($"[INFO] msg.command: {msg.Command}");
+                   
 
                     switch (msg.Command)
                     {
@@ -123,6 +145,18 @@ namespace ServerApp.Services
                             }
                             await _commands.HandleInviteToGroupAsync(user, msg.Args[0], groupId);
                             break;
+
+                        // group message
+                        case Protocol.GROUPMSG:
+                            if (msg.Args.Length < 2 || !int.TryParse(msg.Args[0], out int gid))
+                            {
+                                await user.Writer.WriteLineAsync("[SERVER] Usage: GROUPMSG|<GroupID>|<Content>");
+                                break;
+                            }
+                            string content = string.Join("|", msg.Args.Skip(1));
+                            await _commands.HandleGroupMessageAsync(user, gid, content);
+                            break;
+
 
                         // USER LIST
                         case Protocol.USERS:

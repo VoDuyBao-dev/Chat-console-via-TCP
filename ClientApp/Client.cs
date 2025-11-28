@@ -319,6 +319,49 @@ namespace ClientApp
                     continue;
                 }
 
+                // SEND GROUP MESSAGE - Hỗ trợ cả /g và g
+                if (input.StartsWith("/g", StringComparison.OrdinalIgnoreCase) ||
+                    input.StartsWith("g", StringComparison.OrdinalIgnoreCase))
+                {
+                    bool hasSlash = input.StartsWith("/g", StringComparison.OrdinalIgnoreCase);
+                    string prefix = hasSlash ? "/g" : "g";
+
+                    string rest = input.Substring(prefix.Length).TrimStart();
+
+                    if (string.IsNullOrWhiteSpace(rest))
+                    {
+                        ConsoleLogger.Error("Usage: /g <group ID> <message>");
+                        ConsoleLogger.Info("Example: /g 5 Hello everyone   or   g 5 Hello");
+                        continue;
+                    }
+
+                    int spaceIndex = rest.IndexOf(' ');
+                    if (spaceIndex <= 0)
+                    {
+                        ConsoleLogger.Error("Missing message content! Usage: /g <ID> <message>");
+                        continue;
+                    }
+
+                    string idStr = rest.Substring(0, spaceIndex).Trim();
+                    string message = rest.Substring(spaceIndex + 1).Trim();
+
+                    if (!int.TryParse(idStr, out int groupId) || groupId <= 0)
+                    {
+                        ConsoleLogger.Error("Invalid GroupID! Must be a positive number.");
+                        continue;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(message))
+                    {
+                        ConsoleLogger.Error("Cannot send an empty message in the group!");
+                        continue;
+                    }
+
+                    await _chat.SendMessageAsync(MessageBuilder.SendGroupMessage(groupId, message));
+                    continue;
+                }
+
+
             // UNKNOWN COMMAND
             ConsoleLogger.Error($"Unknown command: {input}. Type /help for commands.");
 
