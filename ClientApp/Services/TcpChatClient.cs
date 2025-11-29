@@ -51,9 +51,9 @@ namespace ClientApp.Services
             }
         }
 
-        /// <summary>
+       
         /// Bắt đầu nhận tin nhắn - CHỈ GỌI 1 LẦN DUY NHẤT!
-        /// </summary>
+       
         public void StartReceiving(Action<string> onMessageReceived)
         {
             if (_onMessageReceived != null)

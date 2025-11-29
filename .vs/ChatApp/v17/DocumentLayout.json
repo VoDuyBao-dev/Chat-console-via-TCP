@@ -3,6 +3,10 @@
   "WorkspaceRootPath": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|d:\\l\u1EADp tr\u00ECnh m\u1EA1ng\\chat-console-via-tcp\\serverapp.tests\\clientconnectiontests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|solutionrelative:serverapp.tests\\clientconnectiontests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|d:\\l\u1EADp tr\u00ECnh m\u1EA1ng\\chat-console-via-tcp\\serverapp\\utilities\\networkhelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|solutionrelative:serverapp\\utilities\\networkhelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -94,11 +98,24 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 5,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 0,
+              "Title": "ClientConnectionTests.cs",
+              "DocumentMoniker": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\ServerApp.Tests\\ClientConnectionTests.cs",
+              "RelativeDocumentMoniker": "ServerApp.Tests\\ClientConnectionTests.cs",
+              "ToolTip": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\ServerApp.Tests\\ClientConnectionTests.cs",
+              "RelativeToolTip": "ServerApp.Tests\\ClientConnectionTests.cs",
+              "ViewState": "AQIAAB8AAAAAAAAAAADwvycAAAAlAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-29T06:59:09.106Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
               "Title": "MessageParser.cs",
               "DocumentMoniker": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\ServerApp\\Services\\MessageParser.cs",
               "RelativeDocumentMoniker": "ServerApp\\Services\\MessageParser.cs",
@@ -110,7 +127,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 3,
               "Title": "TcpListenerService.cs",
               "DocumentMoniker": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\ServerApp\\Services\\TcpListenerService.cs",
               "RelativeDocumentMoniker": "ServerApp\\Services\\TcpListenerService.cs",
@@ -118,12 +135,11 @@
               "RelativeToolTip": "ServerApp\\Services\\TcpListenerService.cs",
               "ViewState": "AQIAAAAAAAAAAAAAAAAAAAsAAAAjAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-24T14:50:31.953Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-11-24T14:50:31.953Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "UdpDiscoveryService.cs",
               "DocumentMoniker": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\ServerApp\\Services\\UdpDiscoveryService.cs",
               "RelativeDocumentMoniker": "ServerApp\\Services\\UdpDiscoveryService.cs",
@@ -131,12 +147,11 @@
               "RelativeToolTip": "ServerApp\\Services\\UdpDiscoveryService.cs",
               "ViewState": "AQIAAB4AAAAAAAAAAAA5wCUAAAAnAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-24T14:45:50.715Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-11-24T14:45:50.715Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 5,
               "Title": "ClientConnectionService.cs",
               "DocumentMoniker": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\ServerApp\\Services\\ClientConnectionService.cs",
               "RelativeDocumentMoniker": "ServerApp\\Services\\ClientConnectionService.cs",
@@ -148,7 +163,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
               "Title": "ChatCommandService.cs",
               "DocumentMoniker": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\ServerApp\\Services\\ChatCommandService.cs",
               "RelativeDocumentMoniker": "ServerApp\\Services\\ChatCommandService.cs",
@@ -156,25 +171,24 @@
               "RelativeToolTip": "ServerApp\\Services\\ChatCommandService.cs",
               "ViewState": "AQIAAFEAAAAAAAAAAIAwwF8AAAAUAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-28T10:57:06.373Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-11-28T10:57:06.373Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "NetworkHelper.cs",
               "DocumentMoniker": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\ServerApp\\Utilities\\NetworkHelper.cs",
               "RelativeDocumentMoniker": "ServerApp\\Utilities\\NetworkHelper.cs",
               "ToolTip": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\ServerApp\\Utilities\\NetworkHelper.cs",
               "RelativeToolTip": "ServerApp\\Utilities\\NetworkHelper.cs",
-              "ViewState": "AQIAAAkAAAAAAAAAAAAAABwAAAANAAAA",
+              "ViewState": "AQIAAAkAAAAAAAAAAAAAABIAAAAAAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-11-24T14:52:56.055Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 6,
               "Title": "DatabaseService.cs",
               "DocumentMoniker": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\ServerApp\\Services\\DatabaseService.cs",
               "RelativeDocumentMoniker": "ServerApp\\Services\\DatabaseService.cs",
@@ -186,7 +200,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 8,
               "Title": "AuthService.cs",
               "DocumentMoniker": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\ServerApp\\Services\\AuthService.cs",
               "RelativeDocumentMoniker": "ServerApp\\Services\\AuthService.cs",
@@ -198,7 +212,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 9,
               "Title": "Server.cs",
               "DocumentMoniker": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\ServerApp\\Server.cs",
               "RelativeDocumentMoniker": "ServerApp\\Server.cs",
@@ -210,7 +224,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 10,
               "Title": "Program.cs",
               "DocumentMoniker": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\ServerApp\\Program.cs",
               "RelativeDocumentMoniker": "ServerApp\\Program.cs",
@@ -222,7 +236,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 14,
+              "DocumentIndex": 15,
               "Title": "AppSettings.cs",
               "DocumentMoniker": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\ServerApp\\Config\\AppSettings.cs",
               "RelativeDocumentMoniker": "ServerApp\\Config\\AppSettings.cs",
@@ -234,7 +248,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
+              "DocumentIndex": 12,
               "Title": "Program.cs",
               "DocumentMoniker": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\ClientApp\\Program.cs",
               "RelativeDocumentMoniker": "ClientApp\\Program.cs",
@@ -246,7 +260,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 11,
               "Title": "Client.cs",
               "DocumentMoniker": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\ClientApp\\Client.cs",
               "RelativeDocumentMoniker": "ClientApp\\Client.cs",
@@ -258,7 +272,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 13,
               "Title": "UdpDiscoveryClient.cs",
               "DocumentMoniker": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\ClientApp\\Services\\UdpDiscoveryClient.cs",
               "RelativeDocumentMoniker": "ClientApp\\Services\\UdpDiscoveryClient.cs",
@@ -270,7 +284,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 13,
+              "DocumentIndex": 14,
               "Title": "TcpChatClient.cs",
               "DocumentMoniker": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\ClientApp\\Services\\TcpChatClient.cs",
               "RelativeDocumentMoniker": "ClientApp\\Services\\TcpChatClient.cs",
@@ -282,7 +296,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 16,
+              "DocumentIndex": 17,
               "Title": "ClientApp.csproj",
               "DocumentMoniker": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\ClientApp\\ClientApp.csproj",
               "RelativeDocumentMoniker": "ClientApp\\ClientApp.csproj",
@@ -294,7 +308,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 15,
+              "DocumentIndex": 16,
               "Title": "appsettings.json",
               "DocumentMoniker": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\Common\\appsettings.json",
               "RelativeDocumentMoniker": "Common\\appsettings.json",
@@ -306,7 +320,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 17,
+              "DocumentIndex": 18,
               "Title": "ConsoleLogger.cs",
               "DocumentMoniker": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\ServerApp\\Utilities\\ConsoleLogger.cs",
               "RelativeDocumentMoniker": "ServerApp\\Utilities\\ConsoleLogger.cs",
@@ -318,7 +332,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 18,
+              "DocumentIndex": 19,
               "Title": "ServerInfo.cs",
               "DocumentMoniker": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\ClientApp\\Models\\ServerInfo.cs",
               "RelativeDocumentMoniker": "ClientApp\\Models\\ServerInfo.cs",
@@ -330,7 +344,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 19,
+              "DocumentIndex": 20,
               "Title": "ConsoleLogger.cs",
               "DocumentMoniker": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\ClientApp\\Utilities\\ConsoleLogger.cs",
               "RelativeDocumentMoniker": "ClientApp\\Utilities\\ConsoleLogger.cs",
@@ -342,7 +356,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 20,
+              "DocumentIndex": 21,
               "Title": "ServerApp.csproj",
               "DocumentMoniker": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\ServerApp\\ServerApp.csproj",
               "RelativeDocumentMoniker": "ServerApp\\ServerApp.csproj",
