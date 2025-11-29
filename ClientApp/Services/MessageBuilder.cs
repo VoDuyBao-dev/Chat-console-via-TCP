@@ -24,10 +24,10 @@ namespace ClientApp.Services
             return $"{Protocol.MSG}{Protocol.Split}{msg}";
         }
 
-        public static string PrivateMessage(string target, string msg)
-        {
-            return $"{Protocol.PM}{Protocol.Split}{target}{Protocol.Split}{msg}";
-        }
+        // public static string PrivateMessage(string target, string msg)
+        // {
+        //     return $"{Protocol.PM}{Protocol.Split}{target}{Protocol.Split}{msg}";
+        // }
 
         public static string Help()
         {
@@ -43,5 +43,17 @@ namespace ClientApp.Services
         {
             return Protocol.EXIT;
         }
+         // Vào phòng chat riêng
+        public static string EnterPrivateRoom(string targetDisplayName)
+            => $"{Protocol.ENTER_PM}{Protocol.Split}{targetDisplayName}";
+
+        // Gửi tin nhắn riêng khi đã vào phòng
+        public static string PrivateMessage(string msg)
+            => $"{Protocol.PRIVMSG}{Protocol.Split}{msg}";
+
+        // Thoát phòng chat riêng
+        public static string ExitPrivateRoom()
+            => $"{Protocol.EXIT_PM}";
+
     }
 }

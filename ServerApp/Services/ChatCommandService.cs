@@ -2,6 +2,8 @@ using System.Collections.Concurrent;
 using System.Text;
 using System.Threading.Tasks;
 using ServerApp.Models;
+using ServerApp.Utilities;
+
 
 namespace ServerApp.Services
 {
@@ -24,49 +26,134 @@ namespace ServerApp.Services
         // PUBLIC MESSAGE
         public async Task HandlePublicAsync(User sender, string msg)
         {
+            if (string.IsNullOrWhiteSpace(msg))
+                return;
             await _broadcast($"[{sender.DisplayName}]: {msg}", sender);
         }
 
-        // PRIVATE MESSAGE
-        public async Task HandlePrivateMessageAsync(User sender, string targetName, string msg)
+        // vào phòng chat riêng
+        public async Task<bool> EnterPrivateChatAsync(User sender, string targetDisplayName)
         {
-            // Validate: empty message or empty target
-            if (string.IsNullOrWhiteSpace(targetName) || string.IsNullOrWhiteSpace(msg))
+            if (string.IsNullOrWhiteSpace(targetDisplayName))
             {
-                await sender.Writer.WriteLineAsync("[SERVER] Usage: PM|<DisplayName>|<message>");
+                await sender.Writer.WriteLineAsync("[privatechat_error] Invalid target name.");
+                return false;
+            }
+
+            // Không cho chat với chính mình
+            if (string.Equals(sender.DisplayName, targetDisplayName, StringComparison.OrdinalIgnoreCase))
+            {
+                await sender.Writer.WriteLineAsync("[privatechat_error] You cannot chat with yourself.");
+                return false;
+            }
+
+            // 1) Tìm online
+            var targetOnline = _clients.Values
+                .FirstOrDefault(u =>
+                    string.Equals(u.DisplayName, targetDisplayName, StringComparison.OrdinalIgnoreCase));
+
+            // 2) Tìm trong database (cả offline)
+            var dbUser = await _db.GetUserByDisplayNameAsync(targetDisplayName);
+
+            if (dbUser == null)
+            {
+                await sender.Writer.WriteLineAsync($"[privatechat_error] User '{targetDisplayName}' not found.");
+                return false;
+            }
+
+            // Luôn set ID và Name cho private chat
+            sender.PrivateChatTargetId = dbUser.Value.UserId;
+            sender.PrivateChatTargetName = dbUser.Value.DisplayName;
+            sender.InPrivateChat = true;
+
+            if (targetOnline == null)
+            {
+                await sender.Writer.WriteLineAsync($"[SERVER] User '{targetDisplayName}' is not online.");
+                sender.InPrivateChat = false;
+                sender.PrivateChatTargetId = null;
+                sender.PrivateChatTargetName = null;
+                return false;
+            }
+
+
+            // ===== CASE 2: TARGET ONLINE =====
+            sender.PrivateChatTarget = targetOnline;
+
+            ConsoleLogger.Info($"session.DisplayName          = {targetOnline.DisplayName}");
+            await sender.Writer.WriteLineAsync(
+                $"[SERVER] Entered private chat with {targetOnline.DisplayName}. Type /exitpm to leave.");
+
+            // Load lịch sử
+            var history = await _db.GetChatHistoryAsync(sender.UserId, dbUser.Value.UserId);
+
+            foreach (var h in history)
+            {
+                if (h.FromDisplay == sender.DisplayName)
+                    await sender.Writer.WriteLineAsync($"[PM TO {dbUser.Value.DisplayName}]: {h.Message}");
+                else
+                    await sender.Writer.WriteLineAsync($"[PM FROM {h.FromDisplay}]: {h.Message}");
+            }
+            await sender.Writer.WriteLineAsync("[privatechat_ok]");
+            return true;
+        }
+
+
+        // Gủi tin nhắn trong phòng chat riêng
+        public async Task SendPrivateChatMessageAsync(User sender, string msg)
+        {
+            if (!sender.InPrivateChat || sender.PrivateChatTargetName == null)
+            {
+
+
+                await sender.Writer.WriteLineAsync("[SERVER] You are not in a private chat oke.");
                 return;
             }
 
-            // Prevent sending PM to yourself
-            if (string.Equals(sender.DisplayName, targetName, StringComparison.Ordinal))
+            if (string.IsNullOrWhiteSpace(msg))
             {
-                await sender.Writer.WriteLineAsync("[SERVER] You cannot send a private message to yourself.");
+                await sender.Writer.WriteLineAsync("[SERVER] Cannot send empty message.");
                 return;
             }
 
-            // Find target by DisplayName
-            User? target = _clients.Values
-                .FirstOrDefault(u => string.Equals(u.DisplayName, targetName, StringComparison.Ordinal));
+            var target = sender.PrivateChatTarget;
+            ConsoleLogger.Info($"session.DisplayName     hehe      = {target.PrivateChatTargetName}");
+            ConsoleLogger.Info($"session.DisplayName     hehe      = {target.PrivateChatTarget}");
+            ConsoleLogger.Info($"session.DisplayName     hehe      = {target.Writer}");
 
-
-            if (target != null)
+            // Nếu target online — gửi tin thật
+            if (target.Writer != null)
             {
-                // Send private message to the target
-                await target.Writer.WriteLineAsync($"[PRIVATE from {sender.DisplayName}]: {msg}");
-
-                // Confirm to the sender
-                await sender.Writer.WriteLineAsync($"[PRIVATE to {target.DisplayName}]: {msg}");
-
-                // Save to database if both are real users (not Guest)
-                if (sender.UserId != 0 && target.UserId != 0)
-                {
-                    await _db.SaveMessageAsync(sender.UserId, target.UserId, msg);
-                }
+                await target.Writer.WriteLineAsync($"[PM from {sender.DisplayName}]: {msg}");
+                await sender.Writer.WriteLineAsync($"[PM to {target.DisplayName}]: {msg}");
             }
             else
             {
-                await sender.Writer.WriteLineAsync($"[SERVER] User '{targetName}' not found.");
+                // target offline — chỉ báo tin đã gửi
+                await sender.Writer.WriteLineAsync($"[PM to {target.DisplayName}]: {msg} (offline)");
             }
+
+            // Lưu database
+            if (sender.UserId != 0 && target.UserId != 0)
+                await _db.SaveMessageAsync(sender.UserId, target.UserId, msg);
+        }
+
+
+        // thoát phòng 
+        public async Task ExitPrivateChatAsync(User sender)
+        {
+            if (!sender.InPrivateChat)
+            {
+                await sender.Writer.WriteLineAsync("[SERVER] Exit: You are not in a private chat.");
+                return;
+            }
+
+            var other = sender.PrivateChatTarget!;
+            sender.PrivateChatTarget = null;
+            sender.InPrivateChat = false;
+
+
+            await sender.Writer.WriteLineAsync($"[SERVER] You left the private chat with {other.DisplayName}.");
+            await sender.Writer.WriteLineAsync("[SERVER] Returned to the public room.");
         }
 
 
@@ -89,7 +176,7 @@ namespace ServerApp.Services
             var help = """
                 ===== Chat Commands =====
                 msg|text                 - Send a public message
-                /pm|<user>|<msg>         - Send a private message
+                /pm|<user>               - Send a private message
                 /users                   - Show list of online users
                 /help                    - Show this help menu
                 exit                     - Leave the chat room

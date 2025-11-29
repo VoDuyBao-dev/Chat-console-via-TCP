@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using Common;
 using ServerApp.Models;
+using ServerApp.Utilities;
 namespace ServerApp.Services
 {
     public class AuthService
@@ -47,7 +48,7 @@ namespace ServerApp.Services
             await _db.SetOnlineAsync(user.UserId);
             _clients.TryAdd(user.Username, user);
 
-            return AuthResult.Ok(Protocol.REGISTER_SUCCESS);
+            return AuthResult.Ok($"{Protocol.REGISTER_SUCCESS}{Protocol.Split}{username}{Protocol.Split}{display}");
         }
 
         // ======================================================
@@ -69,7 +70,7 @@ namespace ServerApp.Services
             var dbUser = await _db.GetUserByUsernameAsync(username);
             if (dbUser == null)
                 return AuthResult.Fail("[SERVER] Incorrect username.");
-            
+
 
             // 2) Kiểm tra password
             if (!string.Equals(dbUser.Value.PasswordHash, passHash, StringComparison.Ordinal))
@@ -79,10 +80,12 @@ namespace ServerApp.Services
             user.UserId = dbUser.Value.UserId;
             user.Username = username;
             user.DisplayName = dbUser.Value.DisplayName;
+       
             await _db.SetOnlineAsync(user.UserId);
             _clients.TryAdd(user.Username, user);
 
-            return AuthResult.Ok(Protocol.LOGIN_SUCCESS);
+            // return AuthResult.Ok(Protocol.LOGIN_SUCCESS);
+            return AuthResult.Ok($"{Protocol.LOGIN_SUCCESS}{Protocol.Split}{username}{Protocol.Split}{dbUser.Value.DisplayName}");
         }
 
     }

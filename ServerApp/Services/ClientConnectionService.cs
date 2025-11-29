@@ -70,7 +70,7 @@ namespace ServerApp.Services
 
                 // JOIN ROOM
                 ConsoleLogger.Join($"{user.DisplayName} ({endpoint}) has joined");
-                await BroadcastAsync($"[SERVER] {user.DisplayName} has joined the room! (Online: {_clients.Count})");
+                await BroadcastAsync($"[SERVER] {user.DisplayName} has joined the public room! (Online: {_clients.Count})");
                 // await BroadcastUserListAsync();
                 await _commands.HandleHelpAsync(user);
 
@@ -89,17 +89,32 @@ namespace ServerApp.Services
                     {
                         // PUBLIC MESSAGE
                         case Protocol.MSG:
+                            // phòng chung
                             if (msg.Args.Length > 0)
                                 await _commands.HandlePublicAsync(user, msg.Args[0]);
                             break;
-                        // PRIVATE MESSAGE
-                        case Protocol.PM:
-                            if (msg.Args.Length < 2)
+                        // Vào phòng chat riêng 
+                        case Protocol.ENTER_PM:
+                            if (msg.Args.Length < 1)
                             {
-                                await user.Writer.WriteLineAsync("[SERVER] Usage: PM|<user>|<msg>");
+                                await user.Writer.WriteLineAsync("[SERVER] Usage: ENTERPM|<DisplayName>");
                                 break;
                             }
-                            await _commands.HandlePrivateMessageAsync(user, msg.Args[0], msg.Args[1]);
+                            bool ok = await _commands.EnterPrivateChatAsync(user, msg.Args[0]);
+                            if (ok)
+                                ConsoleLogger.Info($"{user.DisplayName} entered private chat with {msg.Args[0]}");
+                            // else await _commands.ExitPrivateChatAsync(user);
+                            break;
+                        // Gửi tin nhắn riêng khi đã vào phòng
+                        case Protocol.PRIVMSG:
+                            if (user.InPrivateChat)
+                                await _commands.SendPrivateChatMessageAsync(user, msg.Args[0]);
+                            break;
+
+                        // Thoát phòng chat riêng
+                        case Protocol.EXIT_PM:
+                            if (user.InPrivateChat)
+                                await _commands.ExitPrivateChatAsync(user);
                             break;
 
                         // USER LIST
@@ -114,8 +129,7 @@ namespace ServerApp.Services
 
                         // EXIT
                         case Protocol.EXIT:
-                            return;
-
+                            return; // luôn thoát client
                         default:
                             await user.Writer.WriteLineAsync("[SERVER] Unknown command.");
                             break;
@@ -129,8 +143,8 @@ namespace ServerApp.Services
             finally
             {
                 _clients.TryRemove(user.Username, out _);
-                
- 
+
+
                 if (user.UserId != 0)
                     await _db.SetOfflineAsync(user.UserId);
 
@@ -167,7 +181,7 @@ namespace ServerApp.Services
 
 
 
-        
+
         private async Task BroadcastAsync(string message, User? exclude = null)
         {
             var tasks = new List<Task>();
@@ -182,7 +196,7 @@ namespace ServerApp.Services
                 }
                 catch
                 {
-                    
+
                 }
             }
 

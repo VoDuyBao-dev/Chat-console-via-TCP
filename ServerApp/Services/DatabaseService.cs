@@ -1,5 +1,7 @@
 using MySql.Data.MySqlClient;
 using System.Threading.Tasks;
+using ServerApp.Models;
+
 
 namespace ServerApp.Services
 {
@@ -154,5 +156,72 @@ namespace ServerApp.Services
 
             return null;
         }
+        public async Task<List<ChatMessage>> GetChatHistoryAsync(int userA, int userB)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"[DEBUG] GetChatHistoryAsync(userA={userA}, userB={userB}) | Types -> {userA.GetType()}, {userB.GetType()}");
+
+            var list = new List<ChatMessage>();
+
+            using var conn = new MySqlConnection(_connStr);
+            await conn.OpenAsync();
+
+            string sql = @"
+                SELECT 
+                    m.Content,
+                    m.SentTime,
+                    u.DisplayName AS FromDisplay
+                FROM messages m
+                JOIN users u ON u.UserId = m.SenderId
+                WHERE 
+                    (m.SenderId = @A AND m.ReceiverId = @B)
+                    OR
+                    (m.SenderId = @B AND m.ReceiverId = @A)
+                ORDER BY m.SentTime ASC;
+            ";
+
+            using var cmd = new MySqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@A", userA);
+            cmd.Parameters.AddWithValue("@B", userB);
+
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            int colContent = reader.GetOrdinal("Content");
+            int colSent = reader.GetOrdinal("SentTime");
+            int colFrom = reader.GetOrdinal("FromDisplay");
+
+            while (await reader.ReadAsync())
+            {
+                list.Add(new ChatMessage
+                {
+                    FromDisplay = reader.IsDBNull(colFrom) ? "" : reader.GetString(colFrom),
+                    Message = reader.IsDBNull(colContent) ? "" : reader.GetString(colContent),
+                    Timestamp = reader.GetDateTime(colSent)
+                });
+            }
+            return list;
+        }
+        public async Task<(int UserId, string DisplayName)?> GetUserByDisplayNameAsync(string displayName)
+        {
+            using var conn = GetConn();
+            await conn.OpenAsync();
+
+            string sql = @"SELECT UserId, DisplayName
+                   FROM users
+                   WHERE DisplayName = @d
+                   LIMIT 1";
+
+            var cmd = new MySqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@d", displayName);
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                return (reader.GetInt32(0), reader.GetString(1));
+            }
+
+            return null;
+        }
+
     }
 }
