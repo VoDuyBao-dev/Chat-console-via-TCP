@@ -1,142 +1,194 @@
-﻿    using Common;
-    using System;
-    using System.Threading.Tasks;
-    using ClientApp.Services;
-    using ClientApp.Utilities;
+﻿using Common;
+using System;
+using System.Threading.Tasks;
+using ClientApp.Services;
+using ClientApp.Utilities;
 
-    namespace ClientApp
+namespace ClientApp
+{
+    public class Client
     {
-        public class Client
+        private readonly UdpDiscoveryClient _discovery = new();
+        private readonly TcpChatClient _chat = new();
+
+        private string _serverIp = "";
+        private int _serverPort = 0;
+
+        private bool _needsReconnect = false;
+        private bool _isTyping = false;
+        private bool _isLoggedIn = false;
+        private bool _isWaitingAuth = false;
+        private string? _username = null;
+
+        public async Task RunAsync()
         {
-            private readonly UdpDiscoveryClient _discovery = new();
-            private readonly TcpChatClient _chat = new();
+            Console.Title = "Chat LAN Client - Nhóm 11";
+            ConsoleLogger.Info("=== Welcome to the LAN Chat System===");
 
-            public async Task RunAsync()
+            var register = new RegisterService(_chat);
+            var login = new LoginService(_chat);
+
+            while (true)
             {
-                Console.Title = "Chat LAN Client - Nhóm 11";
-                ConsoleLogger.Info("=== CHÀO MỪNG ĐẾN VỚI CHAT LAN ===");
+                // Reset flags khi bắt đầu vòng mới
+                _needsReconnect = false;
+                _isLoggedIn = false;
+                _isWaitingAuth = false;
 
-                string serverIp;
-                int serverPort;
-
-                // ... (Phần tìm server không thay đổi) ...
+                // ==== TÌM SERVER ====
                 var servers = await _discovery.DiscoverServersAsync(TimeSpan.FromSeconds(4));
-
                 if (servers.Count == 0)
                 {
                     ConsoleLogger.Info("No server found. Enter manually:");
                     Console.Write("IP Server: ");
-                    serverIp = Console.ReadLine()!.Trim();
+                    _serverIp = Console.ReadLine()!.Trim();
                     Console.Write("Port (default 5000): ");
                     var portInput = Console.ReadLine();
-                    serverPort = string.IsNullOrEmpty(portInput) ? 5000 : int.Parse(portInput);
+                    _serverPort = string.IsNullOrEmpty(portInput) ? 5000 : int.Parse(portInput);
                 }
                 else
                 {
                     ConsoleLogger.Info($"\nFound {servers.Count} server(s):");
                     for (int i = 0; i < servers.Count; i++)
-                        Console.WriteLine($"  [{i + 1}] {servers[i]}");
+                        Console.WriteLine($"  [{i + 1}] {servers[i]}");
 
-                    int choice = 0;
+                    int choice;
                     while (true)
                     {
                         Console.Write("\nChoose server (index): ");
-                        var input = Console.ReadLine();
-
-                        if (!int.TryParse(input, out choice) ||
-                            choice < 1 || choice > servers.Count)
-                        {
-                            ConsoleLogger.Error("Invalid selection! Please enter a valid number from the list");
-                            continue;
-                        }
-                        break;
+                        if (int.TryParse(Console.ReadLine(), out choice) &&
+                            choice >= 1 && choice <= servers.Count)
+                            break;
+                        ConsoleLogger.Error("Invalid selection!");
                     }
 
                     var selected = servers[choice - 1];
-                    serverIp = selected.Ip;
-                    serverPort = selected.Port;
+                    _serverIp = selected.Ip;
+                    _serverPort = selected.Port;
                     ConsoleLogger.Success($"Selected: {selected.Name}");
                 }
 
-                // Kết nối tới server
+                // ==== KẾT NỐI ====
                 try
                 {
-                    await _chat.ConnectAsync(serverIp, serverPort);
+                    _chat.Disconnect(); // Dừng thread cũ trước
+                    await Task.Delay(500); // Đợi cleanup
+                    await _chat.ConnectAsync(_serverIp, _serverPort);
                 }
                 catch
                 {
-                    ConsoleLogger.Error("Không thể kết nối đến server!");
-                    Console.WriteLine(); // <<< THÊM: Tạo dòng trống trước menu Reconnect
-                    
-                    bool ok = await ReconnectLoopAsync();
-                    if (!ok) return;
-
-                    // cập nhật lại server info sau khi reconnect
-                    var newServers = await _discovery.DiscoverServersAsync(TimeSpan.FromSeconds(2));
-                    serverIp = newServers[0].Ip;
-                    serverPort = newServers[0].Port;
+                    ConsoleLogger.Error("Unable to connect to the server!");
+                    if (!await ReconnectLoopAsync()) return;
+                    continue; // Bắt đầu lại từ đầu vòng while
                 }
 
-                var session = new UserSession();
-                var register = new RegisterService(_chat);
-                var login = new LoginService(_chat);
+                // ==== NHẬN TIN ====
+               _chat.StartReceiving(async message =>
+{
+    if (_isTyping) return;
 
-                _chat.StartReceiving(async message =>
+    // ---- LOGIN SUCCESS ----
+    if (message.StartsWith("LOGIN_SUCCESS"))
+    {
+        ConsoleLogger.Success("Login successful!\n");
+        _isLoggedIn = true;
+        _isWaitingAuth = false;
+        return;
+    }
+
+    // ---- LOGIN FAIL ----
+    if (message.StartsWith("LOGIN_FAIL"))
+    {
+        var reason = message.Contains('|') ? message.Split('|')[1] : "Unknown error";
+        ConsoleLogger.Error("Login failed: " + reason);
+        _isWaitingAuth = false;
+        _isLoggedIn = false;
+        return;
+    }
+
+    // ---- REGISTER SUCCESS ----
+    if (message.StartsWith("REGISTER_SUCCESS"))
+    {
+        ConsoleLogger.Success("Register successful!\n");
+        _isLoggedIn = true;
+        _isWaitingAuth = false;
+        return;
+    }
+
+    // ---- REGISTER FAIL ----
+    if (message.StartsWith("REGISTER_FAIL"))
+    {
+        var reason = message.Contains('|') ? message.Split('|')[1] : "Unknown error";
+        ConsoleLogger.Error("Register failed: " + reason);
+        _isWaitingAuth = false;
+        _isLoggedIn = false;
+        return;
+    }
+
+    // ---- DISCONNECTED ----
+    if (message == "[DISCONNECTED]")
+    {
+        ConsoleLogger.Error("Lost connection to the server!\n");
+        _needsReconnect = true;
+        return;
+    }
+
+    // ---- OTHER MESSAGES ----
+// ---- USERS LIST ----
+    if (message.StartsWith("USERS|"))
+    {
+        var list = message.Substring("USERS|".Length).Split(',');
+        ConsoleLogger.Info("Online users:");
+        foreach (var user in list)
+            Console.WriteLine(" - " + user);
+        return;
+    }
+
+    // ---- HELP ----
+    if (message.StartsWith("HELP|"))
+    {
+        var helpText = message.Substring("HELP|".Length).Replace("|", "\n");
+        ConsoleLogger.Info("Help commands:\n" + helpText);
+        return;
+    }
+
+    // ---- PUBLIC MESSAGE ----
+    if (message.StartsWith("MSG|") || message.StartsWith("BROADCAST|"))
+    {
+        var content = message.Contains('|') ? message.Split('|', 2)[1] : message;
+        ConsoleLogger.Receive(content);
+        return;
+    }
+
+    // ---- PRIVATE MESSAGE ----
+    if (message.StartsWith("PM|"))
+    {
+        var parts = message.Split('|', 3);
+        if (parts.Length >= 3)
+        {
+            string from = parts[1];
+            string msg = parts[2];
+            ConsoleLogger.Private($"[PM FROM {from}] {msg}");
+        }
+        return;
+    }
+
+    // ---- SERVER MESSAGE / DEFAULT ----
+    if (message.StartsWith("[SERVER]"))
+    {
+        ConsoleLogger.Info(message);
+        return;
+    }
+
+    // In ra message nếu không khớp gì
+    ConsoleLogger.Info(message);
+});
+
+
+                // ==== AUTH LOOP ====
+                while (!_isLoggedIn && !_needsReconnect)
                 {
-                    if (message.Contains("LOGIN_SUCCESS"))
-                    {
-                        ConsoleLogger.Success("Login OK! Welcome to the chat room.\n");
-                        session.Login("unknown");
-                        return;
-                    }
-
-                    if (message.Contains("REGISTER_SUCCESS"))
-                    {
-                        ConsoleLogger.Success("Registration successful! You are now logged into the chat room.\n");
-                        session.Login("unknown");
-                        return;
-                    }
-
-                if (message == "[DISCONNECTED]")
-                    {
-                        ConsoleLogger.Error("Mất kết nối đến server!");
-                        Console.WriteLine(); 
-                        session.ResetAuthWait();
-
-                        bool ok = await ReconnectLoopAsync();
-                        if (!ok)
-                        {
-                            session.IsRunning = false;
-                            return;
-                        }
-
-                        // Sau khi reconnect thành công, reset session để menu login hiển thị
-                        session.IsWaitingAuth = false;
-                        session.IsRunning = true;
-                        ConsoleLogger.Info("Bạn có thể đăng nhập lại!");
-                        return;
-                    }
-
-                    // Nếu CHƯA đăng nhập mà nhận [SERVER] ... thì coi đó là kết quả AUTH (sai username/password,...)
-                    if (!session.IsLoggedIn && message.StartsWith("[SERVER]"))
-                    {
-                        ConsoleLogger.Info(message);
-                        session.ResetAuthWait();
-                        return;
-                    }
-
-                    if (message.StartsWith("[SERVER]"))
-                        ConsoleLogger.Info(message);
-                    else if (message.StartsWith("[PRIVATE", StringComparison.OrdinalIgnoreCase))
-                        ConsoleLogger.Private(message);
-                    else
-                        ConsoleLogger.Receive(message);
-                });
-
-                // MENU đăng nhập / đăng ký
-                while (!session.IsLoggedIn && session.IsRunning)
-                {
-                    if (session.IsWaitingAuth)
+                    if (_isWaitingAuth)
                     {
                         await Task.Delay(100);
                         continue;
@@ -156,142 +208,150 @@
                     switch (opt)
                     {
                         case "1":
-                            await register.HandleRegisterAsync(maskPassword: true);
-                            session.IsWaitingAuth = true;
+                            await register.HandleRegisterAsync(true);
+                            _isWaitingAuth = true;
                             break;
-
                         case "2":
-                            await login.HandleLoginAsync(maskPassword: true);
-                            session.IsWaitingAuth = true;
+                            await login.HandleLoginAsync(true);
+                            _isWaitingAuth = true;
                             break;
-
                         default:
                             ConsoleLogger.Error("Invalid option.");
-                            Console.WriteLine(); // <<< THÊM: Dòng trống sau lỗi menu Auth
                             break;
                     }
                 }
 
-                if (!session.IsRunning)
+                // Nếu cần reconnect trong auth loop, bỏ qua chat loop
+                if (_needsReconnect)
                 {
-                    ConsoleLogger.Error("Kết nối đã bị đóng. Thoát client.");
-                    return;
+                    if (!await ReconnectLoopAsync()) return;
+                    continue; // Quay lại đầu vòng while chính
                 }
 
-                // CHAT LOOP (Không thay đổi)
-                while (true)
+                // ==== CHAT LOOP ====
+                while (_isLoggedIn && _chat.IsConnected && !_needsReconnect)
                 {
                     string? input = Console.ReadLine();
-                    // ... (Các lệnh chat) ...
+                    
+                    // Kiểm tra reconnect ngay sau ReadLine
+                    if (_needsReconnect) break;
                     if (string.IsNullOrWhiteSpace(input)) continue;
                     input = input.Trim();
 
-                    if (input.Equals("exit", StringComparison.OrdinalIgnoreCase) ||
-                        input.Equals("/exit", StringComparison.OrdinalIgnoreCase))
+                    if (input.Equals("exit", StringComparison.OrdinalIgnoreCase))
                     {
                         await _chat.SendMessageAsync("EXIT");
-                        break;
+                        _chat.Disconnect();
+                        return; // Thoát app hoàn toàn
                     }
-
-                    if (input.Equals("users", StringComparison.OrdinalIgnoreCase) ||
-                        input.Equals("/users", StringComparison.OrdinalIgnoreCase))
+                    if (input.Equals("users", StringComparison.OrdinalIgnoreCase))
                     {
                         await _chat.SendMessageAsync("USERS");
                         continue;
                     }
-
-                    if (input.Equals("help", StringComparison.OrdinalIgnoreCase) ||
-                        input.Equals("/help", StringComparison.OrdinalIgnoreCase))
+                    if (input.Equals("help", StringComparison.OrdinalIgnoreCase))
                     {
                         await _chat.SendMessageAsync("HELP");
                         continue;
                     }
-
-                    if (input.StartsWith("/pm ", StringComparison.OrdinalIgnoreCase) ||
-                        input.StartsWith("pm ", StringComparison.OrdinalIgnoreCase))
+                    if (input.StartsWith("/pm "))
                     {
-                        string content = input.StartsWith("/pm ", StringComparison.OrdinalIgnoreCase) ? input[4..].Trim() : input[3..].Trim();
-                        var parts = content.Split(' ', 2);
+                        var parts = input[4..].Trim().Split(' ', 2);
                         if (parts.Length != 2)
                         {
-                            ConsoleLogger.Error("Usage: /pm <DisplayName> <message>");
+                            ConsoleLogger.Error("Usage: /pm <name> <msg>");
                             continue;
                         }
                         await _chat.SendMessageAsync($"PM|{parts[0]}|{parts[1]}");
                         continue;
                     }
-
-                    if (input.StartsWith("msg ", StringComparison.OrdinalIgnoreCase) ||
-                        input.StartsWith("/msg ", StringComparison.OrdinalIgnoreCase))
+                    if (input.StartsWith("/msg "))
                     {
-                        string content = input.StartsWith("/msg ", StringComparison.OrdinalIgnoreCase) ? input[5..].Trim() : input[4..].Trim();
-                        if (string.IsNullOrWhiteSpace(content))
-                        {
-                            ConsoleLogger.Error("Usage: msg <message>");
-                            continue;
-                        }
-                        await _chat.SendMessageAsync($"MSG|{content}");
+                        await _chat.SendMessageAsync($"MSG|{input[5..].Trim()}");
                         continue;
                     }
-
-                    ConsoleLogger.Error($"Unknown command: {input}. Type /help for commands.");
+                    ConsoleLogger.Error("Unknown command.");
                 }
 
+                // Disconnect cleanup
                 _chat.Disconnect();
-            }
+                await Task.Delay(500);
 
-    private async Task<bool> ReconnectLoopAsync()
-{
-    while (true)
-    {
-        Console.WriteLine("\n=======================");
-        Console.WriteLine("1. Reconnect (đợi 10s)");
-        Console.WriteLine("2. Exit");
-        Console.WriteLine("=======================");
-        Console.Write("Chọn: ");
-
-        var opt = (Console.ReadLine() ?? "").Trim();
-
-        if (string.IsNullOrEmpty(opt))
-            continue; // nhấn Enter sẽ hiển thị lại menu
-
-        if (opt == "2")
-        {
-            ConsoleLogger.Info("Thoát chương trình...");
-            return false;
-        }
-        else if (opt == "1")
-        {
-            ConsoleLogger.Info("Đang tìm server trong 10 giây...");
-            
-            DateTime endTime = DateTime.Now.AddSeconds(10);
-            while (DateTime.Now < endTime)
-            {
-                try
+                // Xử lý reconnect nếu cần
+                if (_needsReconnect)
                 {
-                    var servers = await _discovery.DiscoverServersAsync(TimeSpan.FromMilliseconds(500));
-                    if (servers.Count > 0)
+                    if (!await ReconnectLoopAsync()) return;
+                    continue; // Quay lại đầu vòng while chính
+                }
+                
+                // Nếu không reconnect thì thoát app
+                break;
+            }
+        }
+
+        // ===== RECONNECT LOOP =====
+        private async Task<bool> ReconnectLoopAsync()
+        {
+            while (true)
+            {
+                Console.WriteLine("\n=======================");
+                Console.WriteLine("1. Reconnect");
+                Console.WriteLine("2. Exit");
+                Console.WriteLine("=======================");
+                Console.Write("Choose: ");
+                var opt = (Console.ReadLine() ?? "").Trim();
+
+                if (opt == "2")
+                {
+                    ConsoleLogger.Info("Exiting application...");
+                    return false;
+                }
+
+                if (opt == "1")
+                {
+                    ConsoleLogger.Info("Reconnecting...");
+                    
+                    int retries = 0;
+                    const int maxRetries = 3;
+                    
+                    while (retries < maxRetries)
                     {
-                        var sv = servers[0];
-                        ConsoleLogger.Success($"✓ Tìm thấy server: {sv.Name}");
-                        await _chat.ConnectAsync(sv.Ip, sv.Port);
-                        ConsoleLogger.Success("✓ Reconnect thành công!\n");
-                        return true; // reconnect thành công
+                        try
+                        {
+                            _chat.Disconnect();
+                            await Task.Delay(1000);
+                            
+                            await _chat.ConnectAsync(_serverIp, _serverPort, showLog: false);
+                            ConsoleLogger.Success("Reconnected successfully!");
+                            
+                            // Reset các flag trạng thái
+                            _isLoggedIn = false;
+                            _isWaitingAuth = false;
+                            _needsReconnect = false;
+                            
+                            return true;
+                        }
+                        catch
+                        {
+                            retries++;
+                            if (retries < maxRetries)
+                            {
+                                ConsoleLogger.Error($"Reconnect failed. Retry {retries}/{maxRetries} in 5 seconds...");
+                                await Task.Delay(5000);
+                            }
+                            else
+                            {
+                                ConsoleLogger.Error("Max retries reached. Please try again.");
+                                break;
+                            }
+                        }
                     }
                 }
-                catch { }
-
-                await Task.Delay(500);
+                else
+                {
+                    ConsoleLogger.Error("Invalid option. Please choose 1 or 2.");
+                }
             }
-
-            ConsoleLogger.Error("✗ Không tìm thấy server sau 10 giây!\n");
-            // menu sẽ hiển thị lại vì while(true)
-        }
-        else
-        {
-            ConsoleLogger.Error("❌ Lựa chọn không hợp lệ! Vui lòng chọn 1 hoặc 2.\n");
         }
     }
-    }
-}
 }

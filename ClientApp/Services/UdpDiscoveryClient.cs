@@ -3,8 +3,10 @@ using ClientApp.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ClientApp.Services
@@ -15,14 +17,24 @@ namespace ClientApp.Services
         private readonly List<ServerInfo> _discoveredServers = new();
         private bool _listening = true;
 
-        public async Task<List<ServerInfo>> DiscoverServersAsync(TimeSpan timeout)
+        public async Task<List<ServerInfo>> DiscoverServersAsync(TimeSpan timeout, bool suppressLog = false)
         {
             _discoveredServers.Clear();
             _listening = true;
 
-            ConsoleLogger.Info("Đang tìm server trong mạng LAN (UDP port 5001)...");
+            if (!suppressLog)
+                ConsoleLogger.Info($"Searching for server on the LAN(UDP port {DiscoveryPort})...");
 
-            using var udpClient = new UdpClient(DiscoveryPort);
+
+            using var udpClient = new UdpClient();
+            udpClient.EnableBroadcast = true;
+
+
+// Gửi broadcast để hỏi "ai là server?"
+    var broadcastEp = new IPEndPoint(IPAddress.Broadcast, DiscoveryPort);
+    var discoverPacket = Encoding.UTF8.GetBytes("DISCOVER");
+    await udpClient.SendAsync(discoverPacket, discoverPacket.Length, broadcastEp);
+
             var cts = new CancellationTokenSource(timeout);
 
             Task listenTask = Task.Run(async () =>
@@ -49,7 +61,8 @@ namespace ClientApp.Services
                                 if (!_discoveredServers.Any(s => s.Ip == server.Ip))
                                 {
                                     _discoveredServers.Add(server);
-                                    ConsoleLogger.Success($"Phát hiện: {server}");
+                                    if (!suppressLog)
+                                        ConsoleLogger.Success($"Detected: {server}");
                                 }
                             }
                         }

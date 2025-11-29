@@ -1,5 +1,4 @@
-﻿// ClientApp/Services/TcpChatClient.cs
-using System;
+﻿using System;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
@@ -14,12 +13,13 @@ namespace ClientApp.Services
         private NetworkStream? _stream;
         private StreamWriter? _writer;
         private StreamReader? _reader;
+        
 
         // Callback để thông báo có tin nhắn mới (chỉ có 1 luồng đọc!)
         private Action<string>? _onMessageReceived;
 
         public bool IsConnected => _client?.Connected == true;
-        public async Task ConnectAsync(string ip, int port)
+        public async Task ConnectAsync(string ip, int port,bool showLog = true)
         {
             _client = new TcpClient();
             await _client.ConnectAsync(ip, port);
@@ -33,6 +33,7 @@ namespace ClientApp.Services
 
             _reader = new StreamReader(_stream, Encoding.UTF8);
 
+             if (showLog)
             ConsoleLogger.Success($"Đã kết nối tới {ip}:{port}");
         }
 
@@ -106,9 +107,14 @@ namespace ClientApp.Services
                 _reader = null;
                 _stream = null;
                 _client = null;
+
+                _onMessageReceived = null;
+
             }
         }
 
         public void Dispose() => Disconnect();
+        
     }
+    
 }

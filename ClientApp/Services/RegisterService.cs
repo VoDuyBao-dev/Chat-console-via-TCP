@@ -92,7 +92,7 @@ namespace ClientApp.Services
             string passHash = Utils.PasswordHasher.SHA256Hash(password);
 
             // Client chỉ gửi request — server phản hồi
-            await _chat.SendMessageAsync($"REGISTER|{username}|{passHash}|{display}");
+            await _chat.SendMessageAsync($"REGISTER|{username}|{passHash}|{display}\n");
         }
     }
 }

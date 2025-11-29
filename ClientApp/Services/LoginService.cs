@@ -59,7 +59,7 @@ namespace ClientApp.Services
 
             string passHash = Utils.PasswordHasher.SHA256Hash(password);
 
-            await _chat.SendMessageAsync($"LOGIN|{username}|{passHash}");
+            await _chat.SendMessageAsync($"LOGIN|{username}|{passHash}\n");
         }
     }
 }
