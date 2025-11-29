@@ -325,7 +325,40 @@ namespace ServerApp.Services
             return list;
         }
 
-        
+        public async Task<List<GroupMessageDto>> GetGroupMessageHistoryAsync(int groupId, int limit = 20)
+        {
+            var list = new List<GroupMessageDto>();
+            using var conn = GetConn();
+            await conn.OpenAsync();
+
+            string sql = @"
+                SELECT u.DisplayName, gm.Content, gm.SentTime
+                FROM group_messages gm
+                JOIN users u ON gm.SenderId = u.UserId
+                WHERE gm.GroupId = @gid
+                ORDER BY gm.SentTime DESC
+                LIMIT @limit";
+
+            using var cmd = new MySqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@gid", groupId);
+            cmd.Parameters.AddWithValue("@limit", limit);
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                list.Add(new GroupMessageDto
+                {
+                    DisplayName = reader.GetString("DisplayName"),
+                    Content = reader.GetString("Content"),
+                    SentAt = reader.GetDateTime("SentTime")
+                });
+            }
+
+            list.Reverse(); // cũ → mới
+            return list;
+        }
+
+
 
 
 

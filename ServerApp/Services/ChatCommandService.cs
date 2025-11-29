@@ -164,40 +164,54 @@ namespace ServerApp.Services
                 $"       Type '/g {groupId} <message>' to chat in this group!");
         }
          // === Gửi tin nhắn nhóm ===
-        public async Task HandleGroupMessageAsync(User sender, int groupId, string msg)
+        // === GỬI TIN NHẮN NHÓM - CHỈ KHI ĐANG Ở CHẾ ĐỘ NHÓM (CurrentGroupId) ===
+        public async Task HandleGroupMessageAsync(User sender, string msg)
         {
-            
+            // Bắt buộc phải đang ở trong một nhóm (đã dùng /join)
+            if (!sender.CurrentGroupId.HasValue)
+            {
+                await sender.Writer.WriteLineAsync("[SERVER] You are not in any group. Use '/join <id>' to enter a group.");
+                return;
+            }
+
+            int groupId = sender.CurrentGroupId.Value;
 
             if (!_groups.TryGetValue(groupId, out var group))
             {
-                await sender.Writer.WriteLineAsync("[SERVER] The group doesn't exist.");
+                // Nhóm bị xóa? Tự động thoát chế độ nhóm
+                sender.CurrentGroupId = null;
+                await sender.Writer.WriteLineAsync("[SERVER] Group no longer exists. You have been returned to public chat.");
                 return;
             }
 
-            // Kiểm tra sender có trong nhóm không
-           
-            bool isMember = await _db.IsUserInGroupAsync(groupId, sender.UserId);
-            if (!isMember)
+            // Đảm bảo người gửi vẫn là thành viên (an toàn)
+            if (!await _db.IsUserInGroupAsync(groupId, sender.UserId))
             {
-                await sender.Writer.WriteLineAsync("[SERVER] You are not a member of this group.");
+                sender.CurrentGroupId = null;
+                await sender.Writer.WriteLineAsync("[SERVER] You are no longer a member of this group. Returned to public chat.");
                 return;
             }
 
-            //Cập nhật OnlineMembers nếu chưa có (đề phòng restart server)
+            // Cập nhật OnlineMembers (đề phòng restart)
             if (group.OnlineMembers.All(u => u.UserId != sender.UserId))
             {
-                group.OnlineMembers.Add(sender);
+                group.AddMember(sender);
             }
 
+            // Tạo tin nhắn đẹp
             string message = $"[GROUP {group.GroupName}] {sender.DisplayName}: {msg}";
 
             // Gửi cho tất cả thành viên online trong nhóm
-            var tasks = group.OnlineMembers.Select(member =>
-                member.Writer.WriteLineAsync(message));
+            var sendTasks = group.OnlineMembers
+                .Where(m => m.UserId != sender.UserId) // không gửi lại cho người gửi (người gửi thấy ngay)
+                .Select(m => m.Writer.WriteLineAsync(message));
 
-            await Task.WhenAll(tasks);
+            await Task.WhenAll(sendTasks);
 
-            // Lưu vào lịch sử chat nhóm vào db
+            // Gửi lại cho chính người gửi (để thấy tin của mình)
+            await sender.Writer.WriteLineAsync(message);
+
+            // Lưu vào database
             await _db.SaveGroupMessageAsync(groupId, sender.UserId, msg);
         }
 
@@ -225,6 +239,58 @@ namespace ServerApp.Services
             await sender.Writer.WriteLineAsync(sb.ToString());
         }
 
+        // === VÀO NHÓM CHAT ===
+        public async Task HandleJoinGroupAsync(User sender, int groupId)
+        {
+            if (!_groups.TryGetValue(groupId, out var group))
+            {
+                await sender.Writer.WriteLineAsync($"[SERVER] Group ID {groupId} does not exist.");
+                return;
+            }
+
+            if (!await _db.IsUserInGroupAsync(groupId, sender.UserId))
+            {
+                await sender.Writer.WriteLineAsync("[SERVER] You are not a member of this group!");
+                return;
+            }
+
+            sender.CurrentGroupId = groupId;
+
+            await sender.Writer.WriteLineAsync($"");
+            await sender.Writer.WriteLineAsync($"=== YOU HAVE ENTERED GROUP CHAT ===");
+            await sender.Writer.WriteLineAsync($"[GROUP] {group.GroupName} (ID: {groupId})");
+            await sender.Writer.WriteLineAsync($"Type '/leave' to exit group chat");
+            await sender.Writer.WriteLineAsync($"====================================");
+
+            // HIỂN THỊ LỊCH SỬ TIN NHẮN CŨ (10 tin gần nhất)
+            var history = await _db.GetGroupMessageHistoryAsync(groupId, limit: 20);
+            foreach (var msg in history)
+            {
+                await sender.Writer.WriteLineAsync($"[HISTORY] {msg.DisplayName}: {msg.Content}");
+            }
+            await sender.Writer.WriteLineAsync($"--- Now chatting in group ---");
+        }
+
+        // === THOÁT KHỎI NHÓM ===
+        public async Task HandleLeaveGroupAsync(User sender)
+        {
+            if (sender.CurrentGroupId == null)
+            {
+                await sender.Writer.WriteLineAsync("[SERVER] You are not in any group chat.");
+                return;
+            }
+
+            var oldGroupId = sender.CurrentGroupId.Value;
+            sender.CurrentGroupId = null;
+
+            if (_groups.TryGetValue(oldGroupId, out var group))
+            {
+                await sender.Writer.WriteLineAsync($"");
+                await sender.Writer.WriteLineAsync($"[SERVER] You have left group '{group.GroupName}'");
+                await sender.Writer.WriteLineAsync($"[SERVER] Back to public chat room.");
+            }
+        }
+
         // USERS
         public async Task HandleUsersAsync(User sender)
         {
@@ -243,22 +309,29 @@ namespace ServerApp.Services
         {
     
             var help = """
-        ===== Chat Commands =====
-        msg|text                 - Send a public message
-        /pm|<user>|<msg>         - Send a private message
-        /users                   - Show list of online users
-        /mygroups                - Show the groups you are in
+            ================== CHAT COMMANDS ==================
 
-        ---- Group Chat ----
-        /creategroup|<group name> - Create a new group (you become admin)
-        /invite|<user>|<group ID> - Invite a user to the group (admin only)
-        /g|<group ID>|<msg>       - Send a message to a group (e.g., /g|5|Hello everyone)
-        /mygroups                  - Show your groups + number of online members
+            msg|<text>                 Send a message.
+                                    - If you are in Public Chat → sends to public.
+                                    - If you are in a Group Chat → sends to that group.             
+                            
+            /pm|<user>|<message>       Send a private message
+            /users                     Show online users
+            /mygroups                  List your groups + online members
 
-        /help                     - Show this help menu
-        exit                      - Leave the chat room
-        ==========================
-        """;
+            ----- Group Chat Commands -----
+            /creategroup|<name>        Create a new group (you become the admin)
+            /invite|<user>|<id>        Invite a user to a group (admin only)
+            /join|<id>                 Join a group
+            /leave                     Leave current group
+
+            /help                      Show this help menu
+            exit                       Exit the chat room
+
+            =====================================================
+            """;
+
+
             await sender.Writer.WriteLineAsync(help);
         }
     }

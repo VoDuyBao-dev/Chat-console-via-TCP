@@ -164,7 +164,7 @@ namespace ClientApp
             // """);
 
 
-            // CHAT LOOP 
+           
             // CHAT LOOP 
             while (true)
             {
@@ -178,7 +178,7 @@ namespace ClientApp
                 if (input.Equals("exit", StringComparison.OrdinalIgnoreCase) ||
                     input.Equals("/exit", StringComparison.OrdinalIgnoreCase))
                 {
-                    await _chat.SendMessageAsync("EXIT");
+                    await _chat.SendMessageAsync(MessageBuilder.Exit());
                     break;
                 }
 
@@ -186,7 +186,9 @@ namespace ClientApp
                 if (input.Equals("users", StringComparison.OrdinalIgnoreCase) ||
                     input.Equals("/users", StringComparison.OrdinalIgnoreCase))
                 {
-                    await _chat.SendMessageAsync("USERS");
+                
+                    await _chat.SendMessageAsync(MessageBuilder.Users());
+
                     continue;
                 }
 
@@ -194,7 +196,9 @@ namespace ClientApp
                 if (input.Equals("help", StringComparison.OrdinalIgnoreCase) ||
                     input.Equals("/help", StringComparison.OrdinalIgnoreCase))
                 {
-                    await _chat.SendMessageAsync("HELP");
+                    
+                    await _chat.SendMessageAsync(MessageBuilder.Help());
+
                     continue;
                 }
 
@@ -218,10 +222,8 @@ namespace ClientApp
 
                     string target = parts[0];
                     string msg = parts[1];
-
-                    ConsoleLogger.Error($"Sending private message to {target}: {msg}");
-
-                    await _chat.SendMessageAsync($"PM|{target}|{msg}");
+             
+                    await _chat.SendMessageAsync(MessageBuilder.PrivateMessage(target, msg));;
                     continue;
                 }
 
@@ -240,7 +242,7 @@ namespace ClientApp
                         continue;
                     }
 
-                    await _chat.SendMessageAsync($"MSG|{content}");
+                    await _chat.SendMessageAsync(MessageBuilder.PublicMessage(content));;
                     continue;
                 }
 
@@ -319,48 +321,43 @@ namespace ClientApp
                     continue;
                 }
 
-                // SEND GROUP MESSAGE - Hỗ trợ cả /g và g
-                if (input.StartsWith("/g", StringComparison.OrdinalIgnoreCase) ||
-                    input.StartsWith("g", StringComparison.OrdinalIgnoreCase))
+                if (input.Equals("/leave", StringComparison.OrdinalIgnoreCase) ||
+                    input.Equals("leave", StringComparison.OrdinalIgnoreCase))
                 {
-                    bool hasSlash = input.StartsWith("/g", StringComparison.OrdinalIgnoreCase);
-                    string prefix = hasSlash ? "/g" : "g";
+                    await _chat.SendMessageAsync(MessageBuilder.LeaveGroup());
+                    continue;
+                }
 
+                // === VÀO NHÓM ===
+                if (input.StartsWith("/join", StringComparison.OrdinalIgnoreCase) ||
+                    input.StartsWith("join", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Xác định prefix dài nhất khớp (/join hoặc join)
+                    string prefix = input.StartsWith("/join", StringComparison.OrdinalIgnoreCase)
+                        ? "/join"
+                        : "join";
+
+                    // Lấy phần còn lại sau prefix
                     string rest = input.Substring(prefix.Length).TrimStart();
 
                     if (string.IsNullOrWhiteSpace(rest))
                     {
-                        ConsoleLogger.Error("Usage: /g <group ID> <message>");
-                        ConsoleLogger.Info("Example: /g 5 Hello everyone   or   g 5 Hello");
+                        ConsoleLogger.Error("Usage: /join <groupID> or join <groupID>");
                         continue;
                     }
 
-                    int spaceIndex = rest.IndexOf(' ');
-                    if (spaceIndex <= 0)
+                    // rest phải là GroupID → parse
+                    if (!int.TryParse(rest, out int groupId) || groupId <= 0)
                     {
-                        ConsoleLogger.Error("Missing message content! Usage: /g <ID> <message>");
+                        ConsoleLogger.Error("GroupID must be a positive integer.");
                         continue;
                     }
 
-                    string idStr = rest.Substring(0, spaceIndex).Trim();
-                    string message = rest.Substring(spaceIndex + 1).Trim();
-
-                    if (!int.TryParse(idStr, out int groupId) || groupId <= 0)
-                    {
-                        ConsoleLogger.Error("Invalid GroupID! Must be a positive number.");
-                        continue;
-                    }
-
-                    if (string.IsNullOrWhiteSpace(message))
-                    {
-                        ConsoleLogger.Error("Cannot send an empty message in the group!");
-                        continue;
-                    }
-
-                    await _chat.SendMessageAsync(MessageBuilder.SendGroupMessage(groupId, message));
+                    await _chat.SendMessageAsync(MessageBuilder.JoinGroup(groupId));
                     continue;
                 }
-                
+
+
                 // MY GROUPS - Hỗ trợ cả /mygroups và mygroups
                 if (input.Equals("/mygroups", StringComparison.OrdinalIgnoreCase) ||
                     input.Equals("mygroups", StringComparison.OrdinalIgnoreCase))
@@ -374,10 +371,7 @@ namespace ClientApp
             // UNKNOWN COMMAND
             ConsoleLogger.Error($"Unknown command: {input}. Type /help for commands.");
 
-
-
-
-            _chat.Disconnect();
+            // _chat.Disconnect();
         }
     }
     }

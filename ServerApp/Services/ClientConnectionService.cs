@@ -32,7 +32,7 @@ namespace ServerApp.Services
 
             // TẢI TẤT CẢ NHÓM KHI KHỞI ĐỘNG SERVER
             LoadGroupsFromDatabaseAsync().GetAwaiter().GetResult();
-            ConsoleLogger.Success($"[SERVER] Đã tải {_groups.Count} nhóm từ database.");
+           
         }
 
         private async Task LoadGroupsFromDatabaseAsync()
@@ -122,8 +122,18 @@ namespace ServerApp.Services
                     {
                         // PUBLIC MESSAGE
                         case Protocol.MSG:
-                            if (msg.Args.Length > 0)
+                            if (msg.Args.Length == 0) break;
+
+                            // NẾU ĐANG Ở CHẾ ĐỘ NHÓM → gửi như tin nhóm
+                            if (user.CurrentGroupId.HasValue)
+                            {
+                               await _commands.HandleGroupMessageAsync(user, msg.Args[0]);
+                            }
+                            else
+                            {
+                                // Chế độ công khai
                                 await _commands.HandlePublicAsync(user, msg.Args[0]);
+                            }
                             break;
                         // PRIVATE MESSAGE
                         case Protocol.PM:
@@ -156,20 +166,18 @@ namespace ServerApp.Services
                             await _commands.HandleInviteToGroupAsync(user, msg.Args[0], groupId);
                             break;
 
-                        // group message
-                        case Protocol.GROUPMSG:
-                            if (msg.Args.Length < 2 || !int.TryParse(msg.Args[0], out int gid))
-                            {
-                                await user.Writer.WriteLineAsync("[SERVER] Usage: GROUPMSG|<GroupID>|<Content>");
-                                break;
-                            }
-                            string content = string.Join("|", msg.Args.Skip(1));
-                            await _commands.HandleGroupMessageAsync(user, gid, content);
-                            break;
-
                         // MY GROUPS
                         case Protocol.MYGROUPS:
                             await _commands.HandleMyGroupsAsync(user);
+                            break;
+
+                        case Protocol.JOINGROUP:
+                            if (int.TryParse(msg.Args[0], out int joinId))
+                                await _commands.HandleJoinGroupAsync(user, joinId);
+                            break;
+
+                        case Protocol.LEAVEGROUP:
+                            await _commands.HandleLeaveGroupAsync(user);
                             break;
 
                         // USER LIST

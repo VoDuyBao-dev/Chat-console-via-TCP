@@ -43,10 +43,18 @@ namespace ClientApp.Services
         }
 
 // group message
-        public static string SendGroupMessage(int groupId, string message)
+        public static string JoinGroup(int groupId)
         {
-            return $"{Protocol.GROUPMSG}{Protocol.Split}{groupId}{Protocol.Split}{message}";
+           return $"{Protocol.JOINGROUP}{Protocol.Split}{groupId}";
         }
+            
+
+        public static string LeaveGroup()
+        {
+            return Protocol.LEAVEGROUP;
+            
+        }
+        
 
         public static string MyGroups()
         {

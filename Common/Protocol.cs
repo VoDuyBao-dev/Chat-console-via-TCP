@@ -19,6 +19,9 @@
        public const string GROUPMSG   = "GROUPMSG";
        public const string MYGROUPS   = "MYGROUPS";
 
+       public const string JOINGROUP = "JOINGROUP";    
+        public const string LEAVEGROUP = "LEAVEGROUP";  
+
         // SYSTEM
         public const string USERS = "USERS";
         public const string HELP = "HELP";
