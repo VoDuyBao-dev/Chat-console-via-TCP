@@ -10,24 +10,6 @@ namespace ServerApp.Models
 {
     public class User
     {
-<<<<<<< HEAD
-        public int UserId { get; set; }
-        public string Username { get; set; }
-        public string DisplayName { get; set; }
-        public bool IsOnline { get; set; }
-        public DateTime? LastLogin { get; set; }
-        public DateTime? LastLogout { get; set; }
-
-        public TcpClient Client { get; set; } // ket noi dang dung
-
-        public User() { }
-
-        public User(string username, TcpClient client)
-        {
-            Username = username;
-            Client = client;
-            IsOnline = true;
-=======
         public int UserId { get; set; } = 0; // Guest = 0
         public string? DisplayName { get; set; }
 
@@ -37,6 +19,8 @@ namespace ServerApp.Models
         public StreamReader Reader { get; set; }
         public StreamWriter Writer { get; set; }
         public Thread Thread { get; set; }
+
+        public int? CurrentGroupId { get; set; } = null; // null = đang ở chế độ công khai
 
         public User(TcpClient client)
         {
@@ -49,7 +33,6 @@ namespace ServerApp.Models
         public override string ToString()
         {
             return Username ?? Client.Client.RemoteEndPoint.ToString();
->>>>>>> fdeed3a93b879a02bf8134ae80c14bf4eba935c5
         }
     }
 }
