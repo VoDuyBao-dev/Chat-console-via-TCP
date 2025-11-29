@@ -84,105 +84,116 @@ namespace ClientApp
 
                 // ==== NHẬN TIN ====
                _chat.StartReceiving(async message =>
-{
-    if (_isTyping) return;
+                {
+                    if (_isTyping) return;
 
-    // ---- LOGIN SUCCESS ----
-    if (message.StartsWith("LOGIN_SUCCESS"))
-    {
-        ConsoleLogger.Success("Login successful!\n");
-        _isLoggedIn = true;
-        _isWaitingAuth = false;
-        return;
-    }
 
-    // ---- LOGIN FAIL ----
-    if (message.StartsWith("LOGIN_FAIL"))
-    {
-        var reason = message.Contains('|') ? message.Split('|')[1] : "Unknown error";
-        ConsoleLogger.Error("Login failed: " + reason);
-        _isWaitingAuth = false;
-        _isLoggedIn = false;
-        return;
-    }
+                    // ---- LOGIN SUCCESS ----
+                    if (message.StartsWith("LOGIN_SUCCESS"))
+                    {
+                        ConsoleLogger.Success("Login successful!\n");
+                        _isLoggedIn = true;
+                        _isWaitingAuth = false;
+                        return;
+                    }
+                    // ---- SERVER incorrect username/password ----
+                    if (message.StartsWith("[SERVER] Incorrect username") ||
+                        message.StartsWith("[SERVER] Incorrect password"))
+                    {
+                        ConsoleLogger.Error(message);
+                        _isWaitingAuth = false; // <- quan trọng
+                        _isLoggedIn = false;
+                        return;
+                    }
 
-    // ---- REGISTER SUCCESS ----
-    if (message.StartsWith("REGISTER_SUCCESS"))
-    {
-        ConsoleLogger.Success("Register successful!\n");
-        _isLoggedIn = true;
-        _isWaitingAuth = false;
-        return;
-    }
 
-    // ---- REGISTER FAIL ----
-    if (message.StartsWith("REGISTER_FAIL"))
-    {
-        var reason = message.Contains('|') ? message.Split('|')[1] : "Unknown error";
-        ConsoleLogger.Error("Register failed: " + reason);
-        _isWaitingAuth = false;
-        _isLoggedIn = false;
-        return;
-    }
+                    // ---- LOGIN FAIL ----
+                    if (message.StartsWith("LOGIN_FAIL"))
+                    {
+                        var reason = message.Contains('|') ? message.Split('|')[1] : "Unknown error";
+                        ConsoleLogger.Error("Login failed: " + reason);
+                        _isWaitingAuth = false;
+                        _isLoggedIn = false;
+                        return;
+                    }
 
-    // ---- DISCONNECTED ----
-    if (message == "[DISCONNECTED]")
-    {
-        ConsoleLogger.Error("Lost connection to the server!\n");
-        _needsReconnect = true;
-        return;
-    }
+                    // ---- REGISTER SUCCESS ----
+                    if (message.StartsWith("REGISTER_SUCCESS"))
+                    {
+                        ConsoleLogger.Success("Register successful!\n");
+                        _isLoggedIn = true;
+                        _isWaitingAuth = false;
+                        return;
+                    }
 
-    // ---- OTHER MESSAGES ----
-// ---- USERS LIST ----
-    if (message.StartsWith("USERS|"))
-    {
-        var list = message.Substring("USERS|".Length).Split(',');
-        ConsoleLogger.Info("Online users:");
-        foreach (var user in list)
-            Console.WriteLine(" - " + user);
-        return;
-    }
+                    // ---- REGISTER FAIL ----
+                    if (message.StartsWith("REGISTER_FAIL"))
+                    {
+                        var reason = message.Contains('|') ? message.Split('|')[1] : "Unknown error";
+                        ConsoleLogger.Error("Register failed: " + reason);
+                        _isWaitingAuth = false;
+                        _isLoggedIn = false;
+                        return;
+                    }
 
-    // ---- HELP ----
-    if (message.StartsWith("HELP|"))
-    {
-        var helpText = message.Substring("HELP|".Length).Replace("|", "\n");
-        ConsoleLogger.Info("Help commands:\n" + helpText);
-        return;
-    }
+                    // ---- DISCONNECTED ----
+                    if (message == "[DISCONNECTED]")
+                    {
+                        ConsoleLogger.Error("Lost connection to the server!\n");
+                        _needsReconnect = true;
+                        return;
+                    }
 
-    // ---- PUBLIC MESSAGE ----
-    if (message.StartsWith("MSG|") || message.StartsWith("BROADCAST|"))
-    {
-        var content = message.Contains('|') ? message.Split('|', 2)[1] : message;
-        ConsoleLogger.Receive(content);
-        return;
-    }
+                    // ---- OTHER MESSAGES ----
+                // ---- USERS LIST ----
+                    if (message.StartsWith("USERS|"))
+                    {
+                        var list = message.Substring("USERS|".Length).Split(',');
+                        ConsoleLogger.Info("Online users:");
+                        foreach (var user in list)
+                            Console.WriteLine(" - " + user);
+                        return;
+                    }
 
-    // ---- PRIVATE MESSAGE ----
-    if (message.StartsWith("PM|"))
-    {
-        var parts = message.Split('|', 3);
-        if (parts.Length >= 3)
-        {
-            string from = parts[1];
-            string msg = parts[2];
-            ConsoleLogger.Private($"[PM FROM {from}] {msg}");
-        }
-        return;
-    }
+                    // ---- HELP ----
+                    if (message.StartsWith("HELP|"))
+                    {
+                        var helpText = message.Substring("HELP|".Length).Replace("|", "\n");
+                        ConsoleLogger.Info("Help commands:\n" + helpText);
+                        return;
+                    }
 
-    // ---- SERVER MESSAGE / DEFAULT ----
-    if (message.StartsWith("[SERVER]"))
-    {
-        ConsoleLogger.Info(message);
-        return;
-    }
+                    // ---- PUBLIC MESSAGE ----
+                    if (message.StartsWith("MSG|") || message.StartsWith("BROADCAST|"))
+                    {
+                        var content = message.Contains('|') ? message.Split('|', 2)[1] : message;
+                        ConsoleLogger.Receive(content);
+                        return;
+                    }
 
-    // In ra message nếu không khớp gì
-    ConsoleLogger.Info(message);
-});
+                    // ---- PRIVATE MESSAGE ----
+                    if (message.StartsWith("PM|"))
+                    {
+                        var parts = message.Split('|', 3);
+                        if (parts.Length >= 3)
+                        {
+                            string from = parts[1];
+                            string msg = parts[2];
+                            ConsoleLogger.Private($"[PM FROM {from}] {msg}");
+                        }
+                        return;
+                    }
+
+                    // ---- SERVER MESSAGE / DEFAULT ----
+                    if (message.StartsWith("[SERVER]"))
+                    {
+                        ConsoleLogger.Info(message);
+                        return;
+                    }
+
+                // In ra message nếu không khớp gì
+                ConsoleLogger.Info(message);
+            });
 
 
                 // ==== AUTH LOOP ====
@@ -199,6 +210,7 @@ namespace ClientApp
                         ===============================
                         [1] Register
                         [2] Login
+                        [3] Exit
                         ===============================
                         """);
                     Console.ForegroundColor = ConsoleColor.Green;
@@ -215,6 +227,12 @@ namespace ClientApp
                             await login.HandleLoginAsync(true);
                             _isWaitingAuth = true;
                             break;
+                        case "3":
+                               _isWaitingAuth = true;
+                            await _chat.SendMessageAsync("EXIT");
+                            _chat.Disconnect(); 
+                            return;
+
                         default:
                             ConsoleLogger.Error("Invalid option.");
                             break;

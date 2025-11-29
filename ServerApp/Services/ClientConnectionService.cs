@@ -11,6 +11,7 @@ namespace ServerApp.Services
     public class ClientConnectionService
     {
         private readonly ConcurrentDictionary<string, User> _clients = new();
+        private readonly ConcurrentDictionary<int, ChatGroup> _groups = new();
         private readonly DatabaseService _db;
 
         private readonly AuthService _auth;
@@ -25,9 +26,30 @@ namespace ServerApp.Services
 
             _commands = new ChatCommandService(
                 _clients,
+                _groups,
                 _db,
                 (msg, exclude) => BroadcastAsync(msg, exclude));
+
+            // TẢI TẤT CẢ NHÓM KHI KHỞI ĐỘNG SERVER
+            LoadGroupsFromDatabaseAsync().GetAwaiter().GetResult();
+           
         }
+
+        private async Task LoadGroupsFromDatabaseAsync()
+        {
+            var groupsFromDb = await _db.GetAllGroupsAsync();
+            foreach (var g in groupsFromDb)
+            {
+                _groups[g.GroupId] = new ChatGroup
+                {
+                    GroupId = g.GroupId,
+                    GroupName = g.GroupName,
+                    CreatorId = g.CreatorId,
+                    OnlineMembers = new() // sẽ tự thêm khi user login
+                };
+            }
+        }
+
         public void HandleNewClient(TcpClient tcpClient)
         {
 
@@ -67,10 +89,20 @@ namespace ServerApp.Services
                     break;
                 }
 
+                // THÊM USER VÀO DANH SÁCH ONLINE
+                var userGroups = await _db.GetUserGroupsAsync(user.UserId);
+                foreach (var g in userGroups)
+                {
+                    if (_groups.TryGetValue(g.GroupId, out var chatGroup))
+                    {
+                        chatGroup.AddMember(user); 
+                    }
+                }
+
 
                 // JOIN ROOM
                 ConsoleLogger.Join($"{user.DisplayName} ({endpoint}) has joined");
-                await BroadcastAsync($"[SERVER] {user.DisplayName} has joined the room! (Online: {_clients.Count})");
+                await BroadcastAsync($"[SERVER] {user.DisplayName} has joined the public room! (Online: {_clients.Count})");
                 // await BroadcastUserListAsync();
                 await _commands.HandleHelpAsync(user);
 
@@ -84,22 +116,82 @@ namespace ServerApp.Services
                     if (raw == null) break;
 
                     var msg = MessageParser.Parse(raw);
+                   
 
                     switch (msg.Command)
                     {
                         // PUBLIC MESSAGE
                         case Protocol.MSG:
-                            if (msg.Args.Length > 0)
-                                await _commands.HandlePublicAsync(user, msg.Args[0]);
-                            break;
-                        // PRIVATE MESSAGE
-                        case Protocol.PM:
-                            if (msg.Args.Length < 2)
+                            if (msg.Args.Length == 0) break;
+
+                            // NẾU ĐANG Ở CHẾ ĐỘ NHÓM → gửi như tin nhóm
+                            if (user.CurrentGroupId.HasValue)
                             {
-                                await user.Writer.WriteLineAsync("[SERVER] Usage: PM|<user>|<msg>");
+                               await _commands.HandleGroupMessageAsync(user, msg.Args[0]);
+                            }
+                            else
+                            {
+                                // Chế độ công khai
+                                await _commands.HandlePublicAsync(user, msg.Args[0]);
+                            }
+                            break;
+                        // Vào phòng chat riêng 
+                        case Protocol.ENTER_PM:
+                            if (msg.Args.Length < 1)
+                            {
+                                await user.Writer.WriteLineAsync("[SERVER] Usage: ENTERPM|<DisplayName>");
                                 break;
                             }
-                            await _commands.HandlePrivateMessageAsync(user, msg.Args[0], msg.Args[1]);
+                            bool ok = await _commands.EnterPrivateChatAsync(user, msg.Args[0]);
+                            if (ok)
+                                ConsoleLogger.Info($"{user.DisplayName} entered private chat with {msg.Args[0]}");
+                            // else await _commands.ExitPrivateChatAsync(user);
+                            break;
+                        // Gửi tin nhắn riêng khi đã vào phòng
+                        case Protocol.PRIVMSG:
+                            if (user.InPrivateChat)
+                                await _commands.SendPrivateChatMessageAsync(user, msg.Args[0]);
+                            break;
+
+                        // Thoát phòng chat riêng
+                        case Protocol.EXIT_PM:
+                            if (user.InPrivateChat)
+                                await _commands.ExitPrivateChatAsync(user);
+                            break;
+
+                        //  GROUP CHAT 
+                        //  Create group
+                        case Protocol.CREATEGROUP:
+                            if (msg.Args.Length == 0)
+                            {
+                                await user.Writer.WriteLineAsync("[SERVER] Usage: CREATEGROUP|<Tên nhóm>");
+                                break;
+                            }
+                            await _commands.HandleCreateGroupAsync(user, msg.Args[0]);
+                            break;
+
+                        // invite to group
+                        case Protocol.INVITE:
+                            if (msg.Args.Length < 2 || !int.TryParse(msg.Args[1], out int groupId))
+                            {
+                                await user.Writer.WriteLineAsync("[SERVER] Usage: INVITE|<Username>|<GroupID>");
+                                break;
+                            }
+                            await _commands.HandleInviteToGroupAsync(user, msg.Args[0], groupId);
+                            break;
+
+                        // MY GROUPS
+                        case Protocol.MYGROUPS:
+                            await _commands.HandleMyGroupsAsync(user);
+                            break;
+
+                        case Protocol.JOINGROUP:
+                            if (int.TryParse(msg.Args[0], out int joinId))
+                                await _commands.HandleJoinGroupAsync(user, joinId);
+                            break;
+
+                        case Protocol.LEAVEGROUP:
+                            await _commands.HandleLeaveGroupAsync(user);
                             break;
 
                         // USER LIST
@@ -114,8 +206,7 @@ namespace ServerApp.Services
 
                         // EXIT
                         case Protocol.EXIT:
-                            return;
-
+                            return; // luôn thoát client
                         default:
                             await user.Writer.WriteLineAsync("[SERVER] Unknown command.");
                             break;
@@ -129,11 +220,16 @@ namespace ServerApp.Services
             finally
             {
                 _clients.TryRemove(user.Username, out _);
-                
- 
+
+
                 if (user.UserId != 0)
                     await _db.SetOfflineAsync(user.UserId);
 
+                // XÓA USER KHỎI TẤT CẢ NHÓM KHI LOGOUT 
+                foreach (var group in _groups.Values)
+                {
+                    group.RemoveMember(user.UserId);
+                }
                 ConsoleLogger.Info($"{user.DisplayName} ({endpoint}) has disconnected");
                 await BroadcastAsync($"[SERVER] {user.DisplayName} has left the room!");
                 await BroadcastUserListAsync();
@@ -167,7 +263,7 @@ namespace ServerApp.Services
 
 
 
-        
+
         private async Task BroadcastAsync(string message, User? exclude = null)
         {
             var tasks = new List<Task>();
@@ -182,7 +278,7 @@ namespace ServerApp.Services
                 }
                 catch
                 {
-                    
+
                 }
             }
 

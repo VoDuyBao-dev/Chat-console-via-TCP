@@ -13,14 +13,16 @@ namespace ClientApp
     {
         public bool IsLoggedIn { get; set; } = false;
         public string? Username { get; set; }
+        public string? DisplayName { get; set; }
         public bool IsRunning { get; set; } = true;
 
         // Cờ: đang chờ server trả lời LOGIN / REGISTER
         public bool IsWaitingAuth { get; set; }
 
-        public void Login(string username)
+        public void Login(string username, string displayName)
         {
             Username = username;
+            DisplayName = displayName;
             IsWaitingAuth = false;
             IsLoggedIn = true;
         }
@@ -38,5 +40,9 @@ namespace ClientApp
             IsLoggedIn = false;
             IsRunning = false;
         }
+
+        public bool InPrivateChat { get; set; } = false;
+        public string? PrivateChatTarget { get; set; } = null;
+
     }
 }

@@ -1,28 +1,50 @@
-# Build results
+#-----------------------------------------------------------------------------------
+# Visual Studio / .NET Core / C# / ASP.NET Best Practices
+#-----------------------------------------------------------------------------------
+
+## 1. Build and Release Folders
 bin/
 obj/
-out/
-
-# Visual Studio
+[Dd]ebug/
+[Rr]elease/
+TestResults/
+Publish/
 .vs/
+.history/
+
+## 2. Package Manager Files
+packages/
+*.nuget.g.props
+*.nuget.g.targets
+*.csproj.nuget.dgspec.json
+project.assets.json
+project.nuget.cache
+*.nupkg
+*.snupkg
+
+## 3. Temporary / User Files
 *.suo
 *.user
-*.userosscache
-*.sln.docstates
-.vscode/
-
-# Rider
-.idea/
-
-# NuGet
-*.nupkg
-packages/
-project.lock.json
-project.fragment.lock.json
-artifacts/
-
-# Others
+*.bak
 *.log
+*.ncb
+*.aps
+*.pdb
+
+## 4. Compiled Files
+# Compiler-generated files
+*.dll
+*.exe
+*.obj
+*.lib
+*.pdb
+*.ilk
+
+## 5. Other IDEs / Tools
+*.DotSettings
+
+# Hide generated code
+*.Generated.cs
 
 appsettings.json
 

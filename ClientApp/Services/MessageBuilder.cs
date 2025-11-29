@@ -24,10 +24,44 @@ namespace ClientApp.Services
             return $"{Protocol.MSG}{Protocol.Split}{msg}";
         }
 
-        public static string PrivateMessage(string target, string msg)
+        // public static string PrivateMessage(string target, string msg)
+        // {
+        //     return $"{Protocol.PM}{Protocol.Split}{target}{Protocol.Split}{msg}";
+        // }
+
+        // chat group
+        // create group
+        public static string CreateGroup(string groupName)
         {
-            return $"{Protocol.PM}{Protocol.Split}{target}{Protocol.Split}{msg}";
+            return $"{Protocol.CREATEGROUP}{Protocol.Split}{groupName}";
         }
+
+        // invite to group
+        public static string InviteToGroup(string username, int groupId)
+        {
+            return $"{Protocol.INVITE}{Protocol.Split}{username}{Protocol.Split}{groupId}";
+        }
+
+// group message
+        public static string JoinGroup(int groupId)
+        {
+           return $"{Protocol.JOINGROUP}{Protocol.Split}{groupId}";
+        }
+            
+
+        public static string LeaveGroup()
+        {
+            return Protocol.LEAVEGROUP;
+            
+        }
+        
+
+        public static string MyGroups()
+        {
+            return Protocol.MYGROUPS;
+        }   
+
+
 
         public static string Help()
         {
@@ -43,5 +77,17 @@ namespace ClientApp.Services
         {
             return Protocol.EXIT;
         }
+         // Vào phòng chat riêng
+        public static string EnterPrivateRoom(string targetDisplayName)
+            => $"{Protocol.ENTER_PM}{Protocol.Split}{targetDisplayName}";
+
+        // Gửi tin nhắn riêng khi đã vào phòng
+        public static string PrivateMessage(string msg)
+            => $"{Protocol.PRIVMSG}{Protocol.Split}{msg}";
+
+        // Thoát phòng chat riêng
+        public static string ExitPrivateRoom()
+            => $"{Protocol.EXIT_PM}";
+
     }
 }
