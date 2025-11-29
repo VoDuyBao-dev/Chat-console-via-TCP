@@ -353,18 +353,137 @@ namespace ClientApp
                         continue;
                     }
 
-                    await _chat.SendMessageAsync($"MSG|{content}");
+                    await _chat.SendMessageAsync(MessageBuilder.PublicMessage(content));;
+                    continue;
+                }
+
+                // CREATE GROUP
+                if (input.StartsWith("creategroup", StringComparison.OrdinalIgnoreCase) ||
+                    input.StartsWith("/creategroup", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Lấy phần sau "/creategroup" và loại bỏ khoảng trắng thừa
+                    string groupName = input.Length > "/creategroup".Length 
+                    ? input.Substring("/creategroup".Length).Trim()
+                    : "";
+
+                    if (string.IsNullOrWhiteSpace(groupName))
+                    {
+                        ConsoleLogger.Error("Usage: creategroup <Group name>");
+                        ConsoleLogger.Info("Ex: creategroup Group ABC");
+                        continue;
+                    }
+
+                    if (groupName.Length > 50)
+                    {
+                        ConsoleLogger.Error("The group name cannot exceed 50 characters!");
+                        continue;
+                    }
+
+                    if (groupName.Contains('|'))
+                    {
+                        ConsoleLogger.Error("The group name cannot contain the character '|'");
+                        continue;
+                    }
+
+                    await _chat.SendMessageAsync(MessageBuilder.CreateGroup(groupName));
+                    continue;
+                }
+
+                // INVITE TO GROUP - Hỗ trợ cả /invite và invite
+                if (input.StartsWith("/invite", StringComparison.OrdinalIgnoreCase) ||
+                    input.StartsWith("invite", StringComparison.OrdinalIgnoreCase))
+                {   
+                
+                    string prefix = input.StartsWith("/invite", StringComparison.OrdinalIgnoreCase) ? "/invite" : "invite";
+
+                    string rest = input.Substring(prefix.Length).TrimStart();
+
+                    if (string.IsNullOrWhiteSpace(rest))
+                    {
+                        ConsoleLogger.Error("Usage: /invite <username> <group ID>");
+                        ConsoleLogger.Info("Example: /invite Nam 5  or  invite Nam 5");
+                        continue;
+                    }
+
+                    // Split username and groupId by the first space
+                    int spaceIndex = rest.IndexOf(' ');
+                    if (spaceIndex <= 0)
+                    {
+                        ConsoleLogger.Error("Missing GroupID! Usage: /invite <username> <ID>");
+                        continue;
+                    }
+
+                    string username = rest.Substring(0, spaceIndex).Trim();
+                    string idStr = rest.Substring(spaceIndex + 1).Trim();
+
+                    if (string.IsNullOrWhiteSpace(username))
+                    {
+                        ConsoleLogger.Error("Username cannot be empty!");
+                        continue;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(idStr) || !int.TryParse(idStr, out int groupId) || groupId <= 0)
+                    {
+                        ConsoleLogger.Error("GroupID must be a positive integer! Example: 5");
+                        continue;
+                    }
+
+                    await _chat.SendMessageAsync(MessageBuilder.InviteToGroup(username, groupId));
+                    continue;
+                }
+
+                if (input.Equals("/leave", StringComparison.OrdinalIgnoreCase) ||
+                    input.Equals("leave", StringComparison.OrdinalIgnoreCase))
+                {
+                    await _chat.SendMessageAsync(MessageBuilder.LeaveGroup());
+                    continue;
+                }
+
+                // === VÀO NHÓM ===
+                if (input.StartsWith("/join", StringComparison.OrdinalIgnoreCase) ||
+                    input.StartsWith("join", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Xác định prefix dài nhất khớp (/join hoặc join)
+                    string prefix = input.StartsWith("/join", StringComparison.OrdinalIgnoreCase)
+                        ? "/join"
+                        : "join";
+
+                    // Lấy phần còn lại sau prefix
+                    string rest = input.Substring(prefix.Length).TrimStart();
+
+                    if (string.IsNullOrWhiteSpace(rest))
+                    {
+                        ConsoleLogger.Error("Usage: /join <groupID> or join <groupID>");
+                        continue;
+                    }
+
+                    // rest phải là GroupID → parse
+                    if (!int.TryParse(rest, out int groupId) || groupId <= 0)
+                    {
+                        ConsoleLogger.Error("GroupID must be a positive integer.");
+                        continue;
+                    }
+
+                    await _chat.SendMessageAsync(MessageBuilder.JoinGroup(groupId));
                     continue;
                 }
 
 
-                // UNKNOWN COMMAND
-                ConsoleLogger.Error($"Unknown command: {input}. Type /help for commands.");
-            }
+                // MY GROUPS - Hỗ trợ cả /mygroups và mygroups
+                if (input.Equals("/mygroups", StringComparison.OrdinalIgnoreCase) ||
+                    input.Equals("mygroups", StringComparison.OrdinalIgnoreCase))
+                {
+                    await _chat.SendMessageAsync(MessageBuilder.MyGroups());
+                    continue;
+                } 
 
 
 
-            _chat.Disconnect();
+            // UNKNOWN COMMAND
+            ConsoleLogger.Error($"Unknown command: {input}. Type /help for commands.");
+
+            // _chat.Disconnect();
         }
+    }
     }
 }

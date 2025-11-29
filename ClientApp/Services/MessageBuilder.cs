@@ -29,6 +29,40 @@ namespace ClientApp.Services
         //     return $"{Protocol.PM}{Protocol.Split}{target}{Protocol.Split}{msg}";
         // }
 
+        // chat group
+        // create group
+        public static string CreateGroup(string groupName)
+        {
+            return $"{Protocol.CREATEGROUP}{Protocol.Split}{groupName}";
+        }
+
+        // invite to group
+        public static string InviteToGroup(string username, int groupId)
+        {
+            return $"{Protocol.INVITE}{Protocol.Split}{username}{Protocol.Split}{groupId}";
+        }
+
+// group message
+        public static string JoinGroup(int groupId)
+        {
+           return $"{Protocol.JOINGROUP}{Protocol.Split}{groupId}";
+        }
+            
+
+        public static string LeaveGroup()
+        {
+            return Protocol.LEAVEGROUP;
+            
+        }
+        
+
+        public static string MyGroups()
+        {
+            return Protocol.MYGROUPS;
+        }   
+
+
+
         public static string Help()
         {
             return Protocol.HELP;

@@ -25,6 +25,8 @@ namespace ServerApp.Models
         public StreamWriter Writer { get; set; }
         public Thread Thread { get; set; }
 
+        public int? CurrentGroupId { get; set; } = null; // null = đang ở chế độ công khai
+
         public User(TcpClient client)
         {
             Client = client;

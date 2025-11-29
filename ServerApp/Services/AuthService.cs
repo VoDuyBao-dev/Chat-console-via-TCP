@@ -51,9 +51,7 @@ namespace ServerApp.Services
             return AuthResult.Ok($"{Protocol.REGISTER_SUCCESS}{Protocol.Split}{username}{Protocol.Split}{display}");
         }
 
-        // ======================================================
         // LOGIN
-        // ======================================================
         public async Task<AuthResult> HandleLoginAsync(User user, string[] args)
         {
             if (args.Length < 2)
