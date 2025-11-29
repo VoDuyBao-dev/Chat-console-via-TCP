@@ -1,94 +1,23 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "D:\\L\u1EADp tr\u00ECnh m\u1EA1ng\\Chat-console-via-TCP\\",
+  "WorkspaceRootPath": "D:\\Network\\Chat-console-via-TCP\\",
   "Documents": [
     {
+<<<<<<< HEAD
       "AbsoluteMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|d:\\l\u1EADp tr\u00ECnh m\u1EA1ng\\chat-console-via-tcp\\serverapp.tests\\clientconnectiontests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|solutionrelative:serverapp.tests\\clientconnectiontests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|d:\\l\u1EADp tr\u00ECnh m\u1EA1ng\\chat-console-via-tcp\\serverapp\\utilities\\networkhelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|solutionrelative:serverapp\\utilities\\networkhelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+=======
+      "AbsoluteMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|d:\\network\\chat-console-via-tcp\\serverapp.tests\\broadcast_messages_tomultipleclients.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|solutionrelative:serverapp.tests\\broadcast_messages_tomultipleclients.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+>>>>>>> 690cc14a1813d338926083fd3f3fe21da61bd3e4
     },
     {
-      "AbsoluteMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|d:\\l\u1EADp tr\u00ECnh m\u1EA1ng\\chat-console-via-tcp\\serverapp\\services\\udpdiscoveryservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|solutionrelative:serverapp\\services\\udpdiscoveryservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|d:\\l\u1EADp tr\u00ECnh m\u1EA1ng\\chat-console-via-tcp\\serverapp\\services\\tcplistenerservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|solutionrelative:serverapp\\services\\tcplistenerservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|d:\\l\u1EADp tr\u00ECnh m\u1EA1ng\\chat-console-via-tcp\\serverapp\\services\\chatcommandservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|solutionrelative:serverapp\\services\\chatcommandservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|d:\\l\u1EADp tr\u00ECnh m\u1EA1ng\\chat-console-via-tcp\\serverapp\\services\\clientconnectionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|solutionrelative:serverapp\\services\\clientconnectionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|d:\\l\u1EADp tr\u00ECnh m\u1EA1ng\\chat-console-via-tcp\\serverapp\\services\\databaseservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|solutionrelative:serverapp\\services\\databaseservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|d:\\l\u1EADp tr\u00ECnh m\u1EA1ng\\chat-console-via-tcp\\serverapp\\services\\messageparser.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|solutionrelative:serverapp\\services\\messageparser.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|d:\\l\u1EADp tr\u00ECnh m\u1EA1ng\\chat-console-via-tcp\\serverapp\\services\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|solutionrelative:serverapp\\services\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|d:\\l\u1EADp tr\u00ECnh m\u1EA1ng\\chat-console-via-tcp\\serverapp\\server.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|solutionrelative:serverapp\\server.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|d:\\l\u1EADp tr\u00ECnh m\u1EA1ng\\chat-console-via-tcp\\serverapp\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|solutionrelative:serverapp\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AD159313-D0B3-4552-AB1F-E444C6CE593C}|ClientApp\\ClientApp.csproj|d:\\l\u1EADp tr\u00ECnh m\u1EA1ng\\chat-console-via-tcp\\clientapp\\client.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AD159313-D0B3-4552-AB1F-E444C6CE593C}|ClientApp\\ClientApp.csproj|solutionrelative:clientapp\\client.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AD159313-D0B3-4552-AB1F-E444C6CE593C}|ClientApp\\ClientApp.csproj|d:\\l\u1EADp tr\u00ECnh m\u1EA1ng\\chat-console-via-tcp\\clientapp\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AD159313-D0B3-4552-AB1F-E444C6CE593C}|ClientApp\\ClientApp.csproj|solutionrelative:clientapp\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AD159313-D0B3-4552-AB1F-E444C6CE593C}|ClientApp\\ClientApp.csproj|d:\\l\u1EADp tr\u00ECnh m\u1EA1ng\\chat-console-via-tcp\\clientapp\\services\\udpdiscoveryclient.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AD159313-D0B3-4552-AB1F-E444C6CE593C}|ClientApp\\ClientApp.csproj|solutionrelative:clientapp\\services\\udpdiscoveryclient.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AD159313-D0B3-4552-AB1F-E444C6CE593C}|ClientApp\\ClientApp.csproj|d:\\l\u1EADp tr\u00ECnh m\u1EA1ng\\chat-console-via-tcp\\clientapp\\services\\tcpchatclient.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AD159313-D0B3-4552-AB1F-E444C6CE593C}|ClientApp\\ClientApp.csproj|solutionrelative:clientapp\\services\\tcpchatclient.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|d:\\l\u1EADp tr\u00ECnh m\u1EA1ng\\chat-console-via-tcp\\serverapp\\config\\appsettings.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|solutionrelative:serverapp\\config\\appsettings.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{0C43832A-B68C-4DF6-A5A6-7D2648ECB127}|Common\\Common.csproj|d:\\l\u1EADp tr\u00ECnh m\u1EA1ng\\chat-console-via-tcp\\common\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{0C43832A-B68C-4DF6-A5A6-7D2648ECB127}|Common\\Common.csproj|solutionrelative:common\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AD159313-D0B3-4552-AB1F-E444C6CE593C}|ClientApp\\ClientApp.csproj|d:\\l\u1EADp tr\u00ECnh m\u1EA1ng\\chat-console-via-tcp\\clientapp\\clientapp.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
-      "RelativeMoniker": "D:0:0:{AD159313-D0B3-4552-AB1F-E444C6CE593C}|ClientApp\\ClientApp.csproj|solutionrelative:clientapp\\clientapp.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|d:\\l\u1EADp tr\u00ECnh m\u1EA1ng\\chat-console-via-tcp\\serverapp\\utilities\\consolelogger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|solutionrelative:serverapp\\utilities\\consolelogger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AD159313-D0B3-4552-AB1F-E444C6CE593C}|ClientApp\\ClientApp.csproj|d:\\l\u1EADp tr\u00ECnh m\u1EA1ng\\chat-console-via-tcp\\clientapp\\models\\serverinfo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AD159313-D0B3-4552-AB1F-E444C6CE593C}|ClientApp\\ClientApp.csproj|solutionrelative:clientapp\\models\\serverinfo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{AD159313-D0B3-4552-AB1F-E444C6CE593C}|ClientApp\\ClientApp.csproj|d:\\l\u1EADp tr\u00ECnh m\u1EA1ng\\chat-console-via-tcp\\clientapp\\utilities\\consolelogger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{AD159313-D0B3-4552-AB1F-E444C6CE593C}|ClientApp\\ClientApp.csproj|solutionrelative:clientapp\\utilities\\consolelogger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|d:\\l\u1EADp tr\u00ECnh m\u1EA1ng\\chat-console-via-tcp\\serverapp\\serverapp.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
-      "RelativeMoniker": "D:0:0:{F2C772E5-1F00-4198-9C3A-3531AF509BD0}|ServerApp\\ServerApp.csproj|solutionrelative:serverapp\\serverapp.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+      "AbsoluteMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|d:\\network\\chat-console-via-tcp\\serverapp.tests\\onlientclientprint.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2A023D75-1424-4629-9963-48A1FF5596DB}|ServerApp.Tests\\ServerApp.Tests.csproj|solutionrelative:serverapp.tests\\onlientclientprint.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -98,6 +27,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
+<<<<<<< HEAD
           "SelectedChildIndex": 0,
           "Children": [
             {
@@ -365,6 +295,43 @@
               "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
               "WhenOpened": "2025-11-22T03:32:30.841Z"
+=======
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{e1b7d1f8-9b3c-49b1-8f4f-bfc63a88835d}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Broadcast_Messages_ToMultipleClients.cs",
+              "DocumentMoniker": "D:\\Network\\Chat-console-via-TCP\\ServerApp.Tests\\Broadcast_Messages_ToMultipleClients.cs",
+              "RelativeDocumentMoniker": "ServerApp.Tests\\Broadcast_Messages_ToMultipleClients.cs",
+              "ToolTip": "D:\\Network\\Chat-console-via-TCP\\ServerApp.Tests\\Broadcast_Messages_ToMultipleClients.cs",
+              "RelativeToolTip": "ServerApp.Tests\\Broadcast_Messages_ToMultipleClients.cs",
+              "ViewState": "AgIAADIAAAAAAAAAAAAYwFEAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-29T06:31:41.389Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "OnlientClientPrint.cs",
+              "DocumentMoniker": "D:\\Network\\Chat-console-via-TCP\\ServerApp.Tests\\OnlientClientPrint.cs",
+              "RelativeDocumentMoniker": "ServerApp.Tests\\OnlientClientPrint.cs",
+              "ToolTip": "D:\\Network\\Chat-console-via-TCP\\ServerApp.Tests\\OnlientClientPrint.cs",
+              "RelativeToolTip": "ServerApp.Tests\\OnlientClientPrint.cs",
+              "ViewState": "AgIAACsAAAAAAAAAAAAUwDoAAAANAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-29T04:46:42.07Z",
+              "EditorCaption": ""
+>>>>>>> 690cc14a1813d338926083fd3f3fe21da61bd3e4
             }
           ]
         }
