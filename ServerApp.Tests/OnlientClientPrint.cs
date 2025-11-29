@@ -57,13 +57,7 @@ public class OnlineUsersDynamicTests
                 else
                     Console.WriteLine($"{user.DisplayName} online không xuất hiện");
             }
-            else
-            {
-                if (!actualList.Contains(user.DisplayName) && !actualList.Contains(user.Username))
-                    Console.WriteLine($"{user.DisplayName} offline không xuất hiện");
-                else
-                    Console.WriteLine($"{user.DisplayName} offline vẫn xuất hiện");
-            }
+            
         }
 
         // Assert: kiểm tra tất cả user online phải có ít nhất 1 tên trong actualList

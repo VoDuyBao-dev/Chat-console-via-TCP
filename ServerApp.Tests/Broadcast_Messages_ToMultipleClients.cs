@@ -53,7 +53,7 @@ public class TcpChatServer
         }
         Console.WriteLine("[Server] Stopped");
     }
-
+    int DisconnectCount = 0;
     private async void HandleClient(TcpClient client)
     {
         var stream = client.GetStream();
@@ -67,7 +67,12 @@ public class TcpChatServer
             }
             catch { break; }
 
-            if (byteCount == 0) break; // client disconnected
+            if (byteCount == 0)
+            {
+                DisconnectCount++; 
+                break; // client disconnected
+            } 
+                
 
             string msg = Encoding.UTF8.GetString(buffer, 0, byteCount);
             Console.WriteLine("--------------------------------");
@@ -78,7 +83,7 @@ public class TcpChatServer
 
         lock (_clients) { _clients.Remove(client); }
         client.Close();
-        Console.WriteLine("[Server] Client disconnected");
+        Console.WriteLine($"[Server] Client {DisconnectCount} disconnected");
     }
 
     private void Broadcast(string message, TcpClient sender)
@@ -109,7 +114,7 @@ public class TcpChatTests
         var server = new TcpChatServer(port);
         server.Start();
 
-        int clientCount = 2000;
+        int clientCount = 50000;
         var clients = new List<TcpClient>();
         var receivedMessages = new List<string>[clientCount];
         int CountClientsReceivedAllMessages = 0;
@@ -157,7 +162,7 @@ public class TcpChatTests
         }
 
         // Chờ một chút cho tất cả broadcast kịp
-        await Task.Delay(1000);
+        await Task.Delay(10000);
         
         // Kiểm tra: mỗi tin nhắn được nhận bởi tất cả client khác
         //for (int sender = 0; sender < 1; sender++)
