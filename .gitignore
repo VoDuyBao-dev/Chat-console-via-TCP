@@ -45,3 +45,6 @@ project.nuget.cache
 
 # Hide generated code
 *.Generated.cs
+
+appsettings.json
+

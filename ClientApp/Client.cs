@@ -50,7 +50,7 @@ namespace ClientApp
                         continue;
                     }
 
-                    break; 
+                    break;
                 }
 
                 var selected = servers[choice - 1];
@@ -67,19 +67,7 @@ namespace ClientApp
 
             _chat.StartReceiving(message =>
             {
-                if (message.Contains("LOGIN_SUCCESS"))
-                {
-                    ConsoleLogger.Success("Login OK! Welcome to the chat room.\n");
-                    session.Login("unknown");
-                    return;
-                }
-
-                if (message.Contains("REGISTER_SUCCESS"))
-                {
-                    ConsoleLogger.Success("Registration successful! You are now logged into the chat room.\n");
-                    session.Login("unknown");
-                    return;
-                }
+                //Thông báo từ server 
 
                 if (message == "[DISCONNECTED]")
                 {
@@ -88,7 +76,50 @@ namespace ClientApp
                     return;
                 }
 
-                // Nếu CHƯA đăng nhập mà nhận [SERVER] ... thì coi đó là kết quả AUTH (sai username/password,...)
+                if (message.Contains("LOGIN_SUCCESS"))
+                {
+                    var parts = message.Split('|');
+                    if (parts.Length >= 3)
+                    {
+                        string username = parts[1];
+                        string display = parts[2];
+
+                        session.Login(username, display);
+                        ConsoleLogger.Success($"Logged in as {display}");
+                    }
+                    else
+                    {
+                        session.Login("unknown", "unknown");
+                    }
+                    ConsoleLogger.Info(message);
+                    session.IsWaitingAuth = false;
+                    session.IsLoggedIn = true;
+
+                    return;
+                }
+
+                if (message.Contains("REGISTER_SUCCESS"))
+                {
+                    var parts = message.Split('|');
+                    if (parts.Length >= 3)
+                    {
+                        string username = parts[1];
+                        string display = parts[2];
+
+                        session.Login(username, display);
+                        ConsoleLogger.Success($"Account created. Welcome {display}!");
+                    }
+                    else
+                    {
+                        session.Login("unknown", "unknown");
+                    }
+                    ConsoleLogger.Info(message);
+                    session.IsWaitingAuth = false;
+                    session.IsLoggedIn = true;
+                    return;
+                }
+
+
                 if (!session.IsLoggedIn && message.StartsWith("[SERVER]"))
                 {
                     // In thông báo lỗi từ server
@@ -98,12 +129,55 @@ namespace ClientApp
                     return;
                 }
 
-                if (message.StartsWith("[SERVER]"))
-                    ConsoleLogger.Info(message);
-                else if (message.StartsWith("[PRIVATE", StringComparison.OrdinalIgnoreCase))
-                    ConsoleLogger.Private(message);
-                else
-                    ConsoleLogger.Receive(message);
+                if (message.StartsWith("[privatechat_ok] enter", StringComparison.OrdinalIgnoreCase))
+                {
+                    session.InPrivateChat = true;
+
+                    ConsoleLogger.Private("Entered private chat. oke");
+                    return;
+
+                }
+
+                if (message.StartsWith("[privatechat_ok]", StringComparison.OrdinalIgnoreCase))
+                {
+                    session.InPrivateChat = true;
+
+                    ConsoleLogger.Private("Entered private chat.");
+                    return;
+
+                }
+
+
+                // Server báo lỗi PM
+                if (message.StartsWith("privatechat_error", StringComparison.OrdinalIgnoreCase))
+                {
+                    ConsoleLogger.Error(message);
+                    session.InPrivateChat = false;
+                    session.PrivateChatTarget = null;
+                    return;
+                }
+                if (session.InPrivateChat)
+                {
+                    if (message.StartsWith("[PM FROM"))
+                    {
+                        // người kia gửi
+                        ConsoleLogger.Private(TextAlign.AlignLeft(message));
+                    }
+                    else if (message.StartsWith("[PM TO"))
+                    {
+                        // mình gửi
+                        ConsoleLogger.Private(TextAlign.AlignRight(message));
+                    }
+                    else
+                    {
+                        // thông báo trong phòng PM
+                        ConsoleLogger.Private(message);
+                    }
+                    return;
+                }
+
+
+                ConsoleLogger.Receive(message);
             });
 
             // MENU
@@ -121,6 +195,7 @@ namespace ClientApp
                     ===============================
                     [1] Register
                     [2] Login
+                    [3] Exit
                     ===============================
                     """);
                 Console.ForegroundColor = ConsoleColor.Green;
@@ -140,6 +215,10 @@ namespace ClientApp
                         session.IsWaitingAuth = true;
                         ConsoleLogger.Info("Waiting for server response...");
                         break;
+                    case "3":
+                        session.IsRunning = false;
+                        await _chat.SendMessageAsync("EXIT");
+                        break;
 
                     default:
                         ConsoleLogger.Error("Invalid option.");
@@ -154,17 +233,6 @@ namespace ClientApp
                 return;
             }
 
-            // ConsoleLogger.Info("""
-
-            //     === Chat Commands ===
-            //     /help                - Show command list
-            //     /users               - Show online users
-            //     /pm <user> <msg>     - Private message
-            //     exit                 - Leave room
-            // """);
-
-
-           
             // CHAT LOOP 
             while (true)
             {
@@ -173,6 +241,31 @@ namespace ClientApp
 
                 input = input.Trim();
                 if (input == "") continue;
+                if (input.Equals("/exitpm", StringComparison.OrdinalIgnoreCase) || input.Equals("exitpm", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!session.InPrivateChat)
+                    {
+                        ConsoleLogger.Error("You are not in private chat hehe.");
+                        continue;
+                    }
+
+                    await _chat.SendMessageAsync(MessageBuilder.ExitPrivateRoom());
+                    session.InPrivateChat = false;
+                    session.PrivateChatTarget = null;
+
+                    ConsoleLogger.Info("Exited private chat.");
+                    continue;
+                }
+                if (session.InPrivateChat &&
+                session.PrivateChatTarget != null &&
+                session.Username != null &&
+                session.DisplayName != null &&
+                session.IsLoggedIn)
+                {
+                    await _chat.SendMessageAsync(MessageBuilder.PrivateMessage(input));
+                    continue;
+                }
+
 
                 // EXIT
                 if (input.Equals("exit", StringComparison.OrdinalIgnoreCase) ||
@@ -182,55 +275,73 @@ namespace ClientApp
                     break;
                 }
 
+
+
+                if (input.StartsWith("/pm ", StringComparison.OrdinalIgnoreCase) ||
+                   input.StartsWith("pm ", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (session.InPrivateChat)
+                    {
+                        ConsoleLogger.Error("You must exit current private chat first (/exitpm).");
+                        continue;
+                    }
+                    string target = input.StartsWith("/pm ", StringComparison.OrdinalIgnoreCase)
+                        ? input[4..].Trim()
+                        : input[3..].Trim();
+
+                    if (string.IsNullOrWhiteSpace(target))
+                    {
+                        ConsoleLogger.Error("Usage: /pm <DisplayName>");
+                        continue;
+                    }
+
+                    // Gửi yêu cầu vào PM, KHÔNG vào ngay
+                    await _chat.SendMessageAsync(MessageBuilder.EnterPrivateRoom(target));
+
+                    // Gán tạm nhưng không bật InPrivateChat
+                    session.PrivateChatTarget = target;
+
+                    ConsoleLogger.Info($"Requesting private chat with {target}...");
+                    continue;
+                }
+
+
                 // USERS
                 if (input.Equals("users", StringComparison.OrdinalIgnoreCase) ||
-                    input.Equals("/users", StringComparison.OrdinalIgnoreCase))
+                   input.Equals("/users", StringComparison.OrdinalIgnoreCase))
                 {
-                
+                    if (session.InPrivateChat)
+                    {
+                        ConsoleLogger.Error("Cannot use /users inside private chat.");
+                        continue;
+                    }
                     await _chat.SendMessageAsync(MessageBuilder.Users());
-
                     continue;
                 }
 
                 // HELP
                 if (input.Equals("help", StringComparison.OrdinalIgnoreCase) ||
-                    input.Equals("/help", StringComparison.OrdinalIgnoreCase))
+                   input.Equals("/help", StringComparison.OrdinalIgnoreCase))
                 {
-                    
-                    await _chat.SendMessageAsync(MessageBuilder.Help());
-
-                    continue;
-                }
-
-                // PRIVATE MESSAGE
-                if (input.StartsWith("/pm ", StringComparison.OrdinalIgnoreCase) ||
-                    input.StartsWith("pm ", StringComparison.OrdinalIgnoreCase))
-                {
-                    // Bỏ prefix "/pm " hoặc "pm "
-                    string content = input.StartsWith("/pm ", StringComparison.OrdinalIgnoreCase)
-                        ? input[4..].Trim()
-                        : input[3..].Trim();
-
-                    // Tách ra 2 phần: username + message
-                    var parts = content.Split(' ', 2);
-
-                    if (parts.Length != 2)
+                    if (session.InPrivateChat)
                     {
-                        ConsoleLogger.Error("Usage: /pm <DisplayName> <message>");
+                        ConsoleLogger.Error("Cannot use /msg inside private chat.");
                         continue;
                     }
-
-                    string target = parts[0];
-                    string msg = parts[1];
-             
-                    await _chat.SendMessageAsync(MessageBuilder.PrivateMessage(target, msg));;
+                    await _chat.SendMessageAsync(MessageBuilder.Help());
                     continue;
                 }
+
 
                 // PUBLIC MESSAGE
                 if (input.StartsWith("msg ", StringComparison.OrdinalIgnoreCase) ||
-                    input.StartsWith("/msg ", StringComparison.OrdinalIgnoreCase))
+                   input.StartsWith("/msg ", StringComparison.OrdinalIgnoreCase))
                 {
+                    if (session.InPrivateChat)
+                    {
+                        ConsoleLogger.Error("Cannot use /msg inside private chat.");
+                        continue;
+                    }
                     // BỎ prefix: "/msg " = 5 ký tự, "msg " = 4 ký tự
                     string content = input.StartsWith("/msg ", StringComparison.OrdinalIgnoreCase)
                         ? input[5..].Trim()
