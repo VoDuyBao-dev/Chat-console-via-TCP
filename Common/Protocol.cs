@@ -33,5 +33,13 @@
         public const string LOGIN_SUCCESS = "LOGIN_SUCCESS";
 
         public const string ERROR = "ERROR";
+        // Private room
+        public const string ENTER_PM = "ENTERPM";  // client → server
+        public const string PRIVMSG  = "PRIVMSG";  // client → server
+        public const string EXIT_PM  = "EXITPM";   // client → server
+        public const string ENTERPM_OK       = "ENTERPM_OK";
+        public const string ENTERPM_FAIL     = "ENTERPM_FAIL";
+        public const string EXITPM_OK        = "EXITPM_OK";
+
     }
 }
